@@ -1,5 +1,8 @@
 # TriageGeist Machine Learning Pipeline
 
+source .venv/bin/activate
+
+
 This repository contains the modular Machine Learning pipeline for the TriageGeist project. The architecture is split cleanly into data preprocessing, BioBERT feature engineering, CatBoost model training, and distinct gateways for inference.
 
 This structure prevents heavy model-training code from ever crashing or tangling with the lightweight website API inference code.

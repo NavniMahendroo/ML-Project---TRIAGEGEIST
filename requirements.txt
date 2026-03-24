@@ -11,3 +11,6 @@ torch
 transformers
 tqdm
 shap
+fastapi
+uvicorn[standard]
+pymongo

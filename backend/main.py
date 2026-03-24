@@ -1,13 +1,38 @@
-import os
-import pickle
-from pathlib import Path
+"""
+main.py — FastAPI backend for Triagegeist.
+Tries to load the real ML pipeline (CatBoost + BioBERT).
+Falls back to a clinical-rules engine so the frontend always works.
+"""
 
-import pandas as pd
+import os
+import sys
+import logging
+from pathlib import Path
+from typing import Optional
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from database import get_next_serial_number, insert_patient_record
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+log = logging.getLogger(__name__)
+
+# ── Wire-up: add ml/src to sys.path so we can import predict_api ─────────────
+_backend_dir = Path(__file__).resolve().parent
+_ml_src_dir = _backend_dir.parent / "ml" / "src"
+sys.path.insert(0, str(_ml_src_dir))
+
+# Try importing the real ML pipeline (may fail if deps missing / model not trained)
+_ml_available = False
+try:
+    import predict_api  # noqa: E402
+
+    _ml_available = True
+except Exception as exc:
+    log.warning(f"ML pipeline import failed ({exc}). Will use rule-based fallback.")
 
 
 app = FastAPI(title="Triagegeist API")
@@ -26,109 +51,251 @@ app.add_middleware(
 )
 
 
+# ── Request Schema — all 13 clinical features ────────────────────────────────
 class PatientInput(BaseModel):
-    age: int = Field(..., ge=0, le=120)
-    gender: str
+    age: int = Field(..., ge=0, le=120, description="Patient age in years")
+    sex: str = Field(..., description="Male / Female / Other")
+    arrival_mode: str = Field(
+        ..., description="How the patient arrived (Walk-in, Ambulance, etc.)"
+    )
+    chief_complaint_raw: str = Field(
+        ..., description="Free-text chief complaint"
+    )
+    heart_rate: int = Field(..., ge=20, le=260)
+    respiratory_rate: int = Field(..., ge=0, le=80)
+    spo2: int = Field(..., ge=0, le=100, description="Oxygen saturation %")
     systolic_bp: int = Field(..., ge=40, le=300)
     diastolic_bp: int = Field(..., ge=20, le=200)
-    heart_rate: int = Field(..., ge=20, le=260)
-    temperature: float = Field(..., ge=30.0, le=45.0)
-    chief_complaint: str
+    temperature_c: float = Field(..., ge=30.0, le=45.0, description="Body temp °C")
+    pain_score: int = Field(..., ge=0, le=10, description="Self-reported pain 0-10")
+    gcs_total: int = Field(
+        ..., ge=3, le=15, description="Glasgow Coma Scale total"
+    )
+    news2_score: int = Field(
+        ..., ge=0, le=20, description="NEWS2 early-warning score"
+    )
 
 
-MODEL = None
+# ═══════════════════════════════════════════════════════════════════════════════
+# Clinical-Rules Fallback Engine
+# Uses standard clinical criteria (NEWS2, GCS, vitals, keywords) to estimate
+# triage acuity when the ML model is not available.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+URGENCY_LABELS = {
+    1: "Resuscitation",
+    2: "Emergent",
+    3: "Urgent",
+    4: "Less Urgent",
+    5: "Non-Urgent",
+}
+
+# High-acuity clinical keywords (case-insensitive)
+_CRITICAL_KEYWORDS = [
+    "cardiac arrest", "unresponsive", "not breathing", "cpr",
+    "anaphylaxis", "severe hemorrhage", "massive bleeding",
+]
+_EMERGENT_KEYWORDS = [
+    "chest pain", "stroke", "seizure", "overdose", "difficulty breathing",
+    "shortness of breath", "severe pain", "crushing", "stabbing",
+    "head injury", "unconscious", "altered mental status",
+    "suicidal", "self-harm", "poisoning",
+]
+_URGENT_KEYWORDS = [
+    "abdominal pain", "fracture", "laceration", "vomiting blood",
+    "high fever", "asthma attack", "diabetic", "infection",
+    "dehydration", "dizziness", "fainting",
+]
 
 
-def _load_model():
-    backend_dir = Path(__file__).resolve().parent
-    model_candidates = [
-        backend_dir / "triage_model.pkl",
-        backend_dir.parent / "triage_model.pkl",
-    ]
+def _keyword_urgency(text: str) -> int:
+    """Return 1-5 based on keyword matching. 5 means no keyword match."""
+    lower = text.lower()
+    for kw in _CRITICAL_KEYWORDS:
+        if kw in lower:
+            return 1
+    for kw in _EMERGENT_KEYWORDS:
+        if kw in lower:
+            return 2
+    for kw in _URGENT_KEYWORDS:
+        if kw in lower:
+            return 3
+    return 5  # no concerning keywords
 
-    for model_path in model_candidates:
-        if model_path.exists():
-            with open(model_path, "rb") as f:
-                return pickle.load(f)
 
-    return None
+def rule_based_predict(p: PatientInput) -> dict:
+    """
+    Clinical-rules triage estimator.
+    Takes the worst (lowest number = most urgent) across multiple criteria.
+    """
+    scores = []
 
+    # ── 1. NEWS2 Score mapping ────────────────────────────────────────────
+    if p.news2_score >= 7:
+        scores.append(1)
+    elif p.news2_score >= 5:
+        scores.append(2)
+    elif p.news2_score >= 3:
+        scores.append(3)
+    elif p.news2_score >= 1:
+        scores.append(4)
+    else:
+        scores.append(5)
 
-def _build_feature_frame(patient: PatientInput) -> pd.DataFrame:
-    gender_value = patient.gender.strip().lower()
-    gender_encoded = 1 if gender_value in {"male", "m"} else 0
+    # ── 2. GCS mapping ───────────────────────────────────────────────────
+    if p.gcs_total <= 8:
+        scores.append(1)
+    elif p.gcs_total <= 12:
+        scores.append(2)
+    elif p.gcs_total <= 14:
+        scores.append(3)
+    else:
+        scores.append(5)
 
-    candidate_features = {
-        "Age": patient.age,
-        "age": patient.age,
-        "Gender": patient.gender,
-        "gender": patient.gender,
-        "gender_encoded": gender_encoded,
-        "SystolicBP": patient.systolic_bp,
-        "systolic_bp": patient.systolic_bp,
-        "DiastolicBP": patient.diastolic_bp,
-        "diastolic_bp": patient.diastolic_bp,
-        "BP_Systolic": patient.systolic_bp,
-        "BP_Diastolic": patient.diastolic_bp,
-        "HeartRate": patient.heart_rate,
-        "heart_rate": patient.heart_rate,
-        "HR": patient.heart_rate,
-        "Temp": patient.temperature,
-        "Temperature": patient.temperature,
-        "temperature": patient.temperature,
-        "ChiefComplaint": patient.chief_complaint,
-        "chief_complaint": patient.chief_complaint,
-        "Chief Complaint": patient.chief_complaint,
+    # ── 3. SpO2 mapping ──────────────────────────────────────────────────
+    if p.spo2 < 85:
+        scores.append(1)
+    elif p.spo2 < 90:
+        scores.append(2)
+    elif p.spo2 < 94:
+        scores.append(3)
+    else:
+        scores.append(5)
+
+    # ── 4. Heart rate mapping ─────────────────────────────────────────────
+    if p.heart_rate < 40 or p.heart_rate > 150:
+        scores.append(1)
+    elif p.heart_rate < 50 or p.heart_rate > 130:
+        scores.append(2)
+    elif p.heart_rate < 60 or p.heart_rate > 110:
+        scores.append(3)
+    else:
+        scores.append(5)
+
+    # ── 5. Systolic BP mapping ────────────────────────────────────────────
+    if p.systolic_bp < 70 or p.systolic_bp > 250:
+        scores.append(1)
+    elif p.systolic_bp < 80 or p.systolic_bp > 220:
+        scores.append(2)
+    elif p.systolic_bp < 90 or p.systolic_bp > 180:
+        scores.append(3)
+    else:
+        scores.append(5)
+
+    # ── 6. Respiratory rate mapping ───────────────────────────────────────
+    if p.respiratory_rate < 8 or p.respiratory_rate > 35:
+        scores.append(1)
+    elif p.respiratory_rate < 10 or p.respiratory_rate > 30:
+        scores.append(2)
+    elif p.respiratory_rate < 12 or p.respiratory_rate > 24:
+        scores.append(3)
+    else:
+        scores.append(5)
+
+    # ── 7. Temperature mapping ────────────────────────────────────────────
+    if p.temperature_c < 33.0 or p.temperature_c > 41.0:
+        scores.append(1)
+    elif p.temperature_c < 34.0 or p.temperature_c > 40.0:
+        scores.append(2)
+    elif p.temperature_c < 35.0 or p.temperature_c > 39.0:
+        scores.append(3)
+    else:
+        scores.append(5)
+
+    # ── 8. Pain score ─────────────────────────────────────────────────────
+    if p.pain_score >= 9:
+        scores.append(2)
+    elif p.pain_score >= 7:
+        scores.append(3)
+    elif p.pain_score >= 4:
+        scores.append(4)
+    else:
+        scores.append(5)
+
+    # ── 9. Chief complaint keywords ───────────────────────────────────────
+    scores.append(_keyword_urgency(p.chief_complaint_raw))
+
+    # ── 10. Arrival mode ──────────────────────────────────────────────────
+    arrival = p.arrival_mode.lower()
+    if arrival == "helicopter":
+        scores.append(1)
+    elif arrival == "ambulance":
+        scores.append(2)
+
+    # ── 11. Age extremes ──────────────────────────────────────────────────
+    if p.age < 1 or p.age > 85:
+        scores.append(3)  # slightly more urgent for extremes
+
+    # Final: take the most urgent (lowest number)
+    acuity = min(scores) if scores else 3
+    return {
+        "triage_acuity": acuity,
+        "urgency_label": URGENCY_LABELS.get(acuity, "Unknown"),
     }
 
-    if hasattr(MODEL, "feature_names_in_"):
-        expected = list(MODEL.feature_names_in_)
-        row = {}
-        for feature_name in expected:
-            row[feature_name] = candidate_features.get(feature_name, 0)
-        return pd.DataFrame([row])
 
-    return pd.DataFrame([candidate_features])
+# ═══════════════════════════════════════════════════════════════════════════════
+# Lifecycle & Endpoints
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_ml_model_loaded = False
 
 
 @app.on_event("startup")
 def startup_event():
-    global MODEL
-    MODEL = _load_model()
+    global _ml_model_loaded
+    if _ml_available:
+        try:
+            predict_api.load_model()
+            _ml_model_loaded = predict_api._model is not None
+            if _ml_model_loaded:
+                log.info("ML model loaded successfully.")
+            else:
+                log.warning("ML model load returned None. Using rule-based fallback.")
+        except Exception as exc:
+            log.warning(f"ML model load failed: {exc}. Using rule-based fallback.")
+    else:
+        log.info("ML pipeline not available. Using rule-based clinical fallback.")
 
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "model_loaded": MODEL is not None}
+    return {
+        "status": "ok",
+        "engine": "ml_pipeline" if _ml_model_loaded else "rule_based_fallback",
+        "ml_model_loaded": _ml_model_loaded,
+    }
 
 
 @app.post("/predict")
 def predict(patient: PatientInput):
-    if MODEL is None:
-        raise HTTPException(
-            status_code=500,
-            detail=(
-                "Model file not found. Place triage_model.pkl in /backend or project root."
-            ),
-        )
-
-    serial_number = get_next_serial_number()
-    payload = patient.model_dump()
-    insert_patient_record(payload, serial_number)
-
+    # 1. Generate serial number and persist to Mongo
     try:
-        features = _build_feature_frame(patient)
-        raw_prediction = MODEL.predict(features)[0]
-        severity = int(float(raw_prediction))
+        serial_number = get_next_serial_number()
+        payload = patient.model_dump()
+        insert_patient_record(payload, serial_number)
     except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Prediction failed: {str(exc)}",
-        )
+        log.warning(f"Database write failed (non-fatal): {exc}")
+        serial_number = "TG-TEMP-0"
+
+    # 2. Run prediction — ML pipeline if loaded, otherwise rule-based fallback
+    if _ml_model_loaded:
+        try:
+            ml_result = predict_api.predict_patient(payload)
+            engine = "ml_pipeline"
+        except Exception as exc:
+            log.error(f"ML prediction failed, falling back to rules: {exc}")
+            ml_result = rule_based_predict(patient)
+            engine = "rule_based_fallback"
+    else:
+        ml_result = rule_based_predict(patient)
+        engine = "rule_based_fallback"
 
     return {
         "serial_number": serial_number,
-        "prediction": severity,
+        "triage_acuity": ml_result["triage_acuity"],
+        "urgency_label": ml_result["urgency_label"],
+        "engine": engine,
     }
 
 

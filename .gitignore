@@ -1,4 +1,8 @@
+#Node modules
 node_modules/
+
+# macOS metadata
+.DS_Store
 
 # virtualenvs
 .venv/
