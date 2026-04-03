@@ -3,6 +3,11 @@ import numpy as np
 import logging
 import os
 import sys
+
+# Force offline mode to prevent any HTTP requests on startup
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+os.environ["HF_HUB_OFFLINE"] = "1"
+
 import joblib
 import torch
 from catboost import CatBoostClassifier
@@ -10,7 +15,27 @@ from transformers import AutoTokenizer, AutoModel
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import config
-from feature_engineering import get_bert_embeddings
+from tqdm import tqdm
+
+def get_bert_embeddings(text_list, tokenizer, model, device):
+    model.eval()
+    all_embeddings = []
+    use_amp = device.type == 'cuda'
+    for i in tqdm(range(0, len(text_list), config.BERT_BATCH_SIZE), desc='BERT Embeddings'):
+        batch_texts = text_list[i:i + config.BERT_BATCH_SIZE]
+        inputs = tokenizer(
+            batch_texts,
+            padding=True,
+            truncation=True,
+            max_length=config.BERT_MAX_LENGTH,
+            return_tensors='pt',
+        ).to(device)
+        with torch.no_grad():
+            with torch.cuda.amp.autocast(enabled=use_amp):
+                outputs = model(**inputs)
+            embeddings = outputs.last_hidden_state[:, 0, :].cpu().float().numpy()
+            all_embeddings.append(embeddings)
+    return np.vstack(all_embeddings)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -39,8 +64,13 @@ def load_model():
         log.info('Loading PCA transformer...')
         _pca = joblib.load(config.PCA_PATH)
         log.info(f'Loading BioBERT tokenizer and model: {config.BERT_MODEL_NAME}')
-        _tokenizer = AutoTokenizer.from_pretrained(config.BERT_MODEL_NAME)
-        _bert_model = AutoModel.from_pretrained(config.BERT_MODEL_NAME)
+        try:
+            _tokenizer = AutoTokenizer.from_pretrained(config.BERT_MODEL_NAME, local_files_only=True)
+            _bert_model = AutoModel.from_pretrained(config.BERT_MODEL_NAME, local_files_only=True)
+        except Exception:
+            log.info("Local BioBERT files not found. Attempting to download from Hugging Face...")
+            _tokenizer = AutoTokenizer.from_pretrained(config.BERT_MODEL_NAME)
+            _bert_model = AutoModel.from_pretrained(config.BERT_MODEL_NAME)
         _device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         _bert_model = _bert_model.to(_device)
         log.info(f'All models loaded. Device: {_device}')

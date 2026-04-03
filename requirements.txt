@@ -14,3 +14,4 @@ shap
 fastapi
 uvicorn[standard]
 pymongo
+python-dotenv

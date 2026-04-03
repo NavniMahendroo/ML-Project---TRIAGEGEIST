@@ -1,0 +1,9 @@
+feature_engineering will it be needed?
+->are the values in the feature engineering file standarised or normalized?
+    no normalisation not compulsary for tree models like catboost
+
+->these rule based fallback in the backend, are we not always using them.
+->in a single file import all the necesary things from the ml folder
+->new single file for the fallback mechanism
+
+

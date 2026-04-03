@@ -1,39 +1,31 @@
-from datetime import datetime
 import os
+from dotenv import load_dotenv
+from pymongo import MongoClient
+import logging
 
-from pymongo import MongoClient, ReturnDocument
-
+load_dotenv()
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "triagegeist")
 
-_client = MongoClient(MONGO_URI)
-_db = _client[MONGO_DB_NAME]
-_patients_collection = _db["patients"]
-_counters_collection = _db["counters"]
+# API Server
+HOST = os.getenv("HOST", "0.0.0.0")
+PORT = int(os.getenv("PORT", "8000"))
 
+log = logging.getLogger(__name__)
 
-def get_next_serial_number() -> str:
-    """Generate a serial number using TG-YYYY-Index format."""
-    year = datetime.utcnow().year
-    counter_id = f"TG-{year}"
+_client = None
+_db = None
+_patients_collection = None
+_counters_collection = None
 
-    counter_doc = _counters_collection.find_one_and_update(
-        {"_id": counter_id},
-        {"$inc": {"seq": 1}},
-        upsert=True,
-        return_document=ReturnDocument.AFTER,
-    )
-
-    index = counter_doc["seq"]
-    return f"TG-{year}-{index}"
-
-
-def insert_patient_record(payload: dict, serial_number: str) -> None:
-    """Store patient intake data with serial metadata in MongoDB."""
-    document = {
-        **payload,
-        "serial_number": serial_number,
-        "created_at": datetime.utcnow(),
-    }
-    _patients_collection.insert_one(document)
+try:
+    _client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=2000)
+    # Check if connection holds quickly
+    _client.server_info()
+    _db = _client[MONGO_DB_NAME]
+    _patients_collection = _db["patients"]
+    _counters_collection = _db["counters"]
+    log.info(f"Connected to MongoDB at {MONGO_URI}/{MONGO_DB_NAME}")
+except Exception as e:
+    log.warning(f"Could not connect to MongoDB. Running in offline/fallback mode. Error: {e}")
