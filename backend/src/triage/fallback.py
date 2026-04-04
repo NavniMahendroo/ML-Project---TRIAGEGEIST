@@ -1,12 +1,4 @@
-from triage.schema import PatientInput
-
-URGENCY_LABELS = {
-    1: "Resuscitation",
-    2: "Emergent",
-    3: "Urgent",
-    4: "Less Urgent",
-    5: "Non-Urgent",
-}
+from constants.labels import URGENCY_LABELS
 
 # High-acuity clinical keywords (case-insensitive)
 _CRITICAL_KEYWORDS = [
@@ -41,7 +33,7 @@ def _keyword_urgency(text: str) -> int:
     return 5  # no concerning keywords
 
 
-def rule_based_predict(p: PatientInput) -> dict:
+def rule_based_predict(payload: dict) -> dict:
     """
     Clinical-rules triage estimator.
     Takes the worst (lowest number = most urgent) across multiple criteria.
@@ -49,99 +41,110 @@ def rule_based_predict(p: PatientInput) -> dict:
     scores = []
 
     # 1. NEWS2 Score mapping
-    if p.news2_score >= 7:
+    news2_score = payload.get("news2_score", 0)
+    gcs_total = payload.get("gcs_total", 15)
+    spo2 = payload.get("spo2", 100)
+    heart_rate = payload.get("heart_rate", 90)
+    systolic_bp = payload.get("systolic_bp", 120)
+    respiratory_rate = payload.get("respiratory_rate", 16)
+    temperature_c = payload.get("temperature_c", 37)
+    pain_score = payload.get("pain_score", 0)
+    chief_complaint_raw = payload.get("chief_complaint_raw", "")
+    arrival_mode = str(payload.get("arrival_mode", "")).lower()
+    age = payload.get("age", 40)
+
+    if news2_score >= 7:
         scores.append(1)
-    elif p.news2_score >= 5:
+    elif news2_score >= 5:
         scores.append(2)
-    elif p.news2_score >= 3:
+    elif news2_score >= 3:
         scores.append(3)
-    elif p.news2_score >= 1:
+    elif news2_score >= 1:
         scores.append(4)
     else:
         scores.append(5)
 
     # 2. GCS mapping
-    if p.gcs_total <= 8:
+    if gcs_total <= 8:
         scores.append(1)
-    elif p.gcs_total <= 12:
+    elif gcs_total <= 12:
         scores.append(2)
-    elif p.gcs_total <= 14:
+    elif gcs_total <= 14:
         scores.append(3)
     else:
         scores.append(5)
 
     # 3. SpO2 mapping
-    if p.spo2 < 85:
+    if spo2 < 85:
         scores.append(1)
-    elif p.spo2 < 90:
+    elif spo2 < 90:
         scores.append(2)
-    elif p.spo2 < 94:
+    elif spo2 < 94:
         scores.append(3)
     else:
         scores.append(5)
 
     # 4. Heart rate mapping
-    if p.heart_rate < 40 or p.heart_rate > 150:
+    if heart_rate < 40 or heart_rate > 150:
         scores.append(1)
-    elif p.heart_rate < 50 or p.heart_rate > 130:
+    elif heart_rate < 50 or heart_rate > 130:
         scores.append(2)
-    elif p.heart_rate < 60 or p.heart_rate > 110:
+    elif heart_rate < 60 or heart_rate > 110:
         scores.append(3)
     else:
         scores.append(5)
 
     # 5. Systolic BP mapping
-    if p.systolic_bp < 70 or p.systolic_bp > 250:
+    if systolic_bp < 70 or systolic_bp > 250:
         scores.append(1)
-    elif p.systolic_bp < 80 or p.systolic_bp > 220:
+    elif systolic_bp < 80 or systolic_bp > 220:
         scores.append(2)
-    elif p.systolic_bp < 90 or p.systolic_bp > 180:
+    elif systolic_bp < 90 or systolic_bp > 180:
         scores.append(3)
     else:
         scores.append(5)
 
     # 6. Respiratory rate mapping
-    if p.respiratory_rate < 8 or p.respiratory_rate > 35:
+    if respiratory_rate < 8 or respiratory_rate > 35:
         scores.append(1)
-    elif p.respiratory_rate < 10 or p.respiratory_rate > 30:
+    elif respiratory_rate < 10 or respiratory_rate > 30:
         scores.append(2)
-    elif p.respiratory_rate < 12 or p.respiratory_rate > 24:
+    elif respiratory_rate < 12 or respiratory_rate > 24:
         scores.append(3)
     else:
         scores.append(5)
 
     # 7. Temperature mapping
-    if p.temperature_c < 33.0 or p.temperature_c > 41.0:
+    if temperature_c < 33.0 or temperature_c > 41.0:
         scores.append(1)
-    elif p.temperature_c < 34.0 or p.temperature_c > 40.0:
+    elif temperature_c < 34.0 or temperature_c > 40.0:
         scores.append(2)
-    elif p.temperature_c < 35.0 or p.temperature_c > 39.0:
+    elif temperature_c < 35.0 or temperature_c > 39.0:
         scores.append(3)
     else:
         scores.append(5)
 
     # 8. Pain score
-    if p.pain_score >= 9:
+    if pain_score >= 9:
         scores.append(2)
-    elif p.pain_score >= 7:
+    elif pain_score >= 7:
         scores.append(3)
-    elif p.pain_score >= 4:
+    elif pain_score >= 4:
         scores.append(4)
     else:
         scores.append(5)
 
     # 9. Chief complaint keywords
-    scores.append(_keyword_urgency(p.chief_complaint_raw))
+    scores.append(_keyword_urgency(chief_complaint_raw))
 
     # 10. Arrival mode
-    arrival = p.arrival_mode.lower()
-    if arrival == "helicopter":
+    if arrival_mode == "helicopter":
         scores.append(1)
-    elif arrival == "ambulance":
+    elif arrival_mode == "ambulance":
         scores.append(2)
 
     # 11. Age extremes
-    if p.age < 1 or p.age > 85:
+    if age < 1 or age > 85:
         scores.append(3)  # slightly more urgent for extremes
 
     # Final: take the most urgent (lowest number)

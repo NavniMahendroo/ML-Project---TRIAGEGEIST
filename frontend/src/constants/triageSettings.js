@@ -1,4 +1,3 @@
-// Severity configuration
 const severityConfig = {
   1: {
     label: "Resuscitation",
@@ -47,21 +46,94 @@ const severityConfig = {
   },
 };
 
-// Form defaults — 13 clinical features
-const intakeDefaults = {
-  age: "",
-  sex: "",
-  arrival_mode: "",
-  chief_complaint_raw: "",
-  heart_rate: "",
-  respiratory_rate: "",
-  spo2: "",
-  systolic_bp: "",
-  diastolic_bp: "",
-  temperature_c: "",
-  pain_score: "",
-  gcs_total: "",
-  news2_score: "",
+const fallbackFieldOptions = {
+  site_id: [{ value: "SITE-0001", label: "Central Emergency Department" }],
+  nurse_id: [{ value: "self", label: "Self Registration" }],
+  sex: [
+    { value: "M", label: "Male" },
+    { value: "F", label: "Female" },
+  ],
+  language: [
+    "Arabic",
+    "English",
+    "Estonian",
+    "Finnish",
+    "Other",
+    "Russian",
+    "Somali",
+    "Swedish",
+  ].map((value) => ({ value, label: value })),
+  insurance_type: [
+    "military",
+    "none",
+    "private",
+    "public",
+    "unknown",
+  ].map((value) => ({ value, label: value.replace("_", " ").replace(/\b\w/g, (match) => match.toUpperCase()) })),
+  arrival_mode: [
+    "ambulance",
+    "brought_by_family",
+    "helicopter",
+    "police",
+    "transfer",
+    "walk-in",
+  ].map((value) => ({ value, label: value.replace(/-/g, " ").replace(/_/g, " ").replace(/\b\w/g, (match) => match.toUpperCase()) })),
+  transport_origin: [
+    "home",
+    "nursing_home",
+    "other_hospital",
+    "outdoor",
+    "public_space",
+    "school",
+    "workplace",
+  ].map((value) => ({ value, label: value.replace(/_/g, " ").replace(/\b\w/g, (match) => match.toUpperCase()) })),
+  pain_location: [
+    "abdomen",
+    "back",
+    "chest",
+    "extremity",
+    "head",
+    "multiple",
+    "none",
+    "pelvis",
+    "unknown",
+  ].map((value) => ({ value, label: value.replace(/\b\w/g, (match) => match.toUpperCase()) })),
+  mental_status_triage: [
+    "agitated",
+    "alert",
+    "confused",
+    "drowsy",
+    "unresponsive",
+  ].map((value) => ({ value, label: value.replace(/\b\w/g, (match) => match.toUpperCase()) })),
 };
 
-export { severityConfig, intakeDefaults };
+function buildInitialFormData(fieldOptions = fallbackFieldOptions) {
+  return {
+    site_id: fieldOptions.site_id?.[0]?.value || "SITE-0001",
+    nurse_id: fieldOptions.nurse_id?.[0]?.value || "self",
+    name: "",
+    age: "",
+    sex: "M",
+    language: fieldOptions.language?.[1]?.value || "English",
+    insurance_type: fieldOptions.insurance_type?.[3]?.value || "public",
+    num_active_medications: "",
+    num_comorbidities: "",
+    weight_kg: "",
+    height_cm: "",
+    arrival_mode: fieldOptions.arrival_mode?.[5]?.value || "walk-in",
+    transport_origin: fieldOptions.transport_origin?.[0]?.value || "home",
+    pain_location: fieldOptions.pain_location?.[7]?.value || "unknown",
+    mental_status_triage: fieldOptions.mental_status_triage?.[1]?.value || "alert",
+    chief_complaint_raw: "",
+    heart_rate: "",
+    respiratory_rate: "",
+    spo2: "",
+    systolic_bp: "",
+    diastolic_bp: "",
+    temperature_c: "",
+    pain_score: "",
+    gcs_total: "",
+  };
+}
+
+export { buildInitialFormData, fallbackFieldOptions, severityConfig };

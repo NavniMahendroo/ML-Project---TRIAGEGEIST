@@ -1,5 +1,7 @@
 #Node modules
 node_modules/
+frontend/dist/
+.codex
 
 # macOS metadata
 .DS_Store

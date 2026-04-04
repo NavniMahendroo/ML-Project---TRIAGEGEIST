@@ -10,15 +10,19 @@ What it does:
     1. Loads the pre-trained model into memory (one-time startup cost)
     2. Accepts a patient dict payload
     3. Runs real-time inference via predict_api.py
-    4. Returns the triage_acuity prediction and urgency label
+    4. Returns the triage_acuity prediction
 
 Note: In production, this will be wrapped in a FastAPI/Flask web server
 that exposes an HTTP endpoint callable by the frontend.
 """
 import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src'))
-import predict_api
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from ml.src import predict_api
 
 if __name__ == '__main__':
     print('═' * 55)
@@ -46,5 +50,4 @@ if __name__ == '__main__':
     result = predict_api.predict_patient(sample_patient)
     print('\n--- Prediction Result ---')
     print(f'  Triage Acuity : {result["triage_acuity"]}')
-    print(f'  Urgency Level : {result["urgency_label"]}')
     print('═' * 55)

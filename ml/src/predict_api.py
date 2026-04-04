@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import logging
 import os
-import sys
 
 # Force offline mode to prevent any HTTP requests on startup
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
@@ -13,8 +12,7 @@ import torch
 from catboost import CatBoostClassifier
 from transformers import AutoTokenizer, AutoModel
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import config
+from . import config
 from tqdm import tqdm
 
 def get_bert_embeddings(text_list, tokenizer, model, device):
@@ -55,31 +53,51 @@ _pca = None
 _device = None
 
 
+def get_model_metadata() -> dict:
+    load_model()
+    feature_names = list(_model.feature_names_)
+    cat_indices = _model.get_cat_feature_indices()
+    categorical_features = [feature_names[index] for index in cat_indices]
+    pca_features = [column for column in feature_names if column.startswith("biobert_pca_")]
+    pre_pca_features = [column for column in feature_names if column not in pca_features]
+    return {
+        "feature_names": feature_names,
+        "categorical_features": categorical_features,
+        "pca_features": pca_features,
+        "pre_pca_features": [*pre_pca_features, "chief_complaint_raw"],
+    }
+
+
 def load_model():
     global _model, _tokenizer, _bert_model, _pca, _device
     if _model is None:
         log.info('Loading CatBoost model into memory...')
         _model = CatBoostClassifier()
         _model.load_model(config.MODEL_PATH)
-        log.info('Loading PCA transformer...')
-        _pca = joblib.load(config.PCA_PATH)
-        log.info(f'Loading BioBERT tokenizer and model: {config.BERT_MODEL_NAME}')
-        try:
-            _tokenizer = AutoTokenizer.from_pretrained(config.BERT_MODEL_NAME, local_files_only=True)
-            _bert_model = AutoModel.from_pretrained(config.BERT_MODEL_NAME, local_files_only=True)
-        except Exception:
-            log.info("Local BioBERT files not found. Attempting to download from Hugging Face...")
-            _tokenizer = AutoTokenizer.from_pretrained(config.BERT_MODEL_NAME)
-            _bert_model = AutoModel.from_pretrained(config.BERT_MODEL_NAME)
-        _device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        _bert_model = _bert_model.to(_device)
-        log.info(f'All models loaded. Device: {_device}')
+        
+        if os.path.exists(config.PCA_PATH):
+            log.info('Loading PCA transformer...')
+            _pca = joblib.load(config.PCA_PATH)
+            log.info(f'Loading BioBERT tokenizer and model: {config.BERT_MODEL_NAME}')
+            try:
+                _tokenizer = AutoTokenizer.from_pretrained(config.BERT_MODEL_NAME, local_files_only=True)
+                _bert_model = AutoModel.from_pretrained(config.BERT_MODEL_NAME, local_files_only=True)
+            except Exception:
+                log.info("Local BioBERT files not found. Attempting to download from Hugging Face...")
+                _tokenizer = AutoTokenizer.from_pretrained(config.BERT_MODEL_NAME)
+                _bert_model = AutoModel.from_pretrained(config.BERT_MODEL_NAME)
+            _device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            _bert_model = _bert_model.to(_device)
+        else:
+            log.info('No PCA file found for this version. Skipping BioBERT loading.')
+            
+        log.info('All models loaded properly.')
 
 
 def predict_patient(patient_data: dict) -> dict:
     """
     Accepts a single patient record as a dict (from website JSON payload) and
-    returns a dict with the predicted triage_acuity and urgency label.
+    returns a dict with the predicted triage_acuity.
 
     Example input:
     {
@@ -89,34 +107,41 @@ def predict_patient(patient_data: dict) -> dict:
     """
     load_model()
 
+    metadata = get_model_metadata()
+    missing_input_fields = [
+        field for field in metadata["pre_pca_features"] if field not in patient_data
+    ]
+    if missing_input_fields:
+        raise ValueError(f"Incoming payload is missing required pre-PCA fields: {missing_input_fields}")
+
     df = pd.DataFrame([patient_data])
 
     # Extract BERT embedding for the single record
-    if 'chief_complaint_raw' in df.columns:
+    if 'chief_complaint_raw' in df.columns and _pca is not None:
         texts = df['chief_complaint_raw'].fillna('No Data').to_list()
         bert_features = get_bert_embeddings(texts, _tokenizer, _bert_model, _device)
         bert_pca = _pca.transform(bert_features)
-        bert_cols = [f'bert_pca_{i}' for i in range(config.PCA_COMPONENTS)]
+        
+        # Match the EXACT 1-indexed column names we used in v1.0.2 CatBoost Training!
+        bert_cols = [f'biobert_pca_{i+1}' for i in range(config.PCA_COMPONENTS)]
         df_bert = pd.DataFrame(bert_pca, columns=bert_cols, index=df.index)
         df = pd.concat([df, df_bert], axis=1)
 
     # Ensure incoming data perfectly matches the CatBoost training schema
-    expected_cols = _model.feature_names_
+    expected_cols = metadata["feature_names"]
     X = df.reindex(columns=expected_cols)
 
     # Force categorical features to be strings
-    cat_indices = _model.get_cat_feature_indices()
-    cat_col_names = [expected_cols[i] for i in cat_indices]
+    cat_col_names = metadata["categorical_features"]
     for col in cat_col_names:
         X[col] = X[col].fillna('Unknown').astype(str)
 
-    # Force remaining features to numeric, filling missing heavily with 0
+    # Force remaining features to numeric while preserving NaN for CatBoost.
     num_col_names = [c for c in expected_cols if c not in cat_col_names]
     for col in num_col_names:
-        X[col] = pd.to_numeric(X[col], errors='coerce').fillna(0)
+        X[col] = pd.to_numeric(X[col], errors='coerce')
 
     prediction = int(_model.predict(X).flatten()[0])
-    urgency_labels = {1: 'Resuscitation', 2: 'Emergent', 3: 'Urgent', 4: 'Less Urgent', 5: 'Non-Urgent'}
-    result = {'triage_acuity': prediction, 'urgency_label': urgency_labels.get(prediction, 'Unknown')}
+    result = {'triage_acuity': prediction}
     log.info(f'Prediction: {result}')
     return result

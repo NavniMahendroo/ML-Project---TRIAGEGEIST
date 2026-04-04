@@ -6,4 +6,9 @@ feature_engineering will it be needed?
 ->in a single file import all the necesary things from the ml folder
 ->new single file for the fallback mechanism
 
+->pain location multiple, if patient tells many places.
 
+->remove mongodb backup, simply show error if mongodb not connected.
+
+->ML model for prediciting chief_complaint_system
+->how model performs when there is no patient_history
