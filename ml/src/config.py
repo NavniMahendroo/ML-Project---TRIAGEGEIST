@@ -1,7 +1,7 @@
 import os
 import json
 
-from base_config import *
+from .base_config import *
 
 # ── The Global Switch ────────────────────────────────────────────────────────
 MODEL_VERSION = 'v1.0.2'

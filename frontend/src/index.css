@@ -145,6 +145,17 @@ body {
   background: rgba(8, 25, 45, 0.85);
 }
 
+.field-input:-webkit-autofill,
+.field-input:-webkit-autofill:hover,
+.field-input:-webkit-autofill:focus,
+.field-input:-webkit-autofill:active {
+  -webkit-text-fill-color: #f0f9ff;
+  caret-color: #f0f9ff;
+  box-shadow: 0 0 0 1000px rgba(7, 18, 34, 0.92) inset;
+  -webkit-box-shadow: 0 0 0 1000px rgba(7, 18, 34, 0.92) inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
 /* ── Animated Orbs ───────────────────────────────────────────────────────── */
 .orb {
   pointer-events: none;
