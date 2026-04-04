@@ -61,19 +61,24 @@ def load_model():
         log.info('Loading CatBoost model into memory...')
         _model = CatBoostClassifier()
         _model.load_model(config.MODEL_PATH)
-        log.info('Loading PCA transformer...')
-        _pca = joblib.load(config.PCA_PATH)
-        log.info(f'Loading BioBERT tokenizer and model: {config.BERT_MODEL_NAME}')
-        try:
-            _tokenizer = AutoTokenizer.from_pretrained(config.BERT_MODEL_NAME, local_files_only=True)
-            _bert_model = AutoModel.from_pretrained(config.BERT_MODEL_NAME, local_files_only=True)
-        except Exception:
-            log.info("Local BioBERT files not found. Attempting to download from Hugging Face...")
-            _tokenizer = AutoTokenizer.from_pretrained(config.BERT_MODEL_NAME)
-            _bert_model = AutoModel.from_pretrained(config.BERT_MODEL_NAME)
-        _device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        _bert_model = _bert_model.to(_device)
-        log.info(f'All models loaded. Device: {_device}')
+        
+        if os.path.exists(config.PCA_PATH):
+            log.info('Loading PCA transformer...')
+            _pca = joblib.load(config.PCA_PATH)
+            log.info(f'Loading BioBERT tokenizer and model: {config.BERT_MODEL_NAME}')
+            try:
+                _tokenizer = AutoTokenizer.from_pretrained(config.BERT_MODEL_NAME, local_files_only=True)
+                _bert_model = AutoModel.from_pretrained(config.BERT_MODEL_NAME, local_files_only=True)
+            except Exception:
+                log.info("Local BioBERT files not found. Attempting to download from Hugging Face...")
+                _tokenizer = AutoTokenizer.from_pretrained(config.BERT_MODEL_NAME)
+                _bert_model = AutoModel.from_pretrained(config.BERT_MODEL_NAME)
+            _device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            _bert_model = _bert_model.to(_device)
+        else:
+            log.info('No PCA file found for this version. Skipping BioBERT loading.')
+            
+        log.info('All models loaded properly.')
 
 
 def predict_patient(patient_data: dict) -> dict:
@@ -92,11 +97,13 @@ def predict_patient(patient_data: dict) -> dict:
     df = pd.DataFrame([patient_data])
 
     # Extract BERT embedding for the single record
-    if 'chief_complaint_raw' in df.columns:
+    if 'chief_complaint_raw' in df.columns and _pca is not None:
         texts = df['chief_complaint_raw'].fillna('No Data').to_list()
         bert_features = get_bert_embeddings(texts, _tokenizer, _bert_model, _device)
         bert_pca = _pca.transform(bert_features)
-        bert_cols = [f'bert_pca_{i}' for i in range(config.PCA_COMPONENTS)]
+        
+        # Match the EXACT 1-indexed column names we used in v1.0.2 CatBoost Training!
+        bert_cols = [f'biobert_pca_{i+1}' for i in range(config.PCA_COMPONENTS)]
         df_bert = pd.DataFrame(bert_pca, columns=bert_cols, index=df.index)
         df = pd.concat([df, df_bert], axis=1)
 

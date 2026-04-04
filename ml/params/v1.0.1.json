@@ -1,0 +1,23 @@
+{
+    "MODEL_VERSION": "v1.0.1",
+    "DESCRIPTION": "The 'Learning' MVP model. Excludes BioBERT NLP processing and PCA matrix compression. Uses a simple Train/Test split instead of K-Folds.",
+    
+    "BERT_MODEL_NAME": null,
+    "BERT_MAX_LENGTH": null,
+    "BERT_BATCH_SIZE": null,
+    "PCA_COMPONENTS": null,
+    
+    "CATBOOST_PARAMS": {
+        "iterations": 10000,
+        "learning_rate": 0.05,
+        "depth": 6,
+        "loss_function": "MultiClass",
+        "early_stopping_rounds": 50,
+        "verbose": 100,
+        "random_seed": 42
+    },
+    
+    "CV_FOLDS": null,
+    "TEST_SPLIT_SIZE": 0.2,
+    "RANDOM_SEED": 42
+}

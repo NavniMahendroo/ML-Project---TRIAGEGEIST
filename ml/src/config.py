@@ -4,7 +4,7 @@ import json
 from base_config import *
 
 # ── The Global Switch ────────────────────────────────────────────────────────
-MODEL_VERSION = 'v1.0.0'
+MODEL_VERSION = 'v1.0.2'
 
 # ── Dynamic Parameter Loading ───────────────────────────────────────────────
 params_path = os.path.join(PARAMS_DIR, f'{MODEL_VERSION}.json')
@@ -25,5 +25,5 @@ CV_FOLDS = _params.get('CV_FOLDS')
 RANDOM_SEED = _params.get('RANDOM_SEED')
 
 # ── Derived Model Paths ──────────────────────────────────────────────────────
-MODEL_PATH = os.path.join(MODELS_DIR, f'model_{MODEL_VERSION}.cbm')
-PCA_PATH = os.path.join(MODELS_DIR, f'pca_{MODEL_VERSION}.pkl')
+MODEL_PATH = os.path.join(MODELS_DIR, MODEL_VERSION, f'model_{MODEL_VERSION}.cbm')
+PCA_PATH = os.path.join(MODELS_DIR, MODEL_VERSION, f'pca_{MODEL_VERSION}.pkl')
