@@ -1,0 +1,34 @@
+[
+  {
+    "_id": {
+      "$oid": "69e68d40b2a1807522f5b644"
+    },
+    "username": "admin",
+    "password_hash": "$2b$12$jZ/U9FBSV4jzjoFXZpyike3hYcbaQB3swPn2b9LnIiV51ARY/XlY2",
+    "role": "admin",
+    "full_name": "System Administrator",
+    "is_active": true,
+    "created_at": {
+      "$date": "2026-04-20T20:32:00.264Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T20:32:00.264Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69e68d40b2a1807522f5b645"
+    },
+    "username": "staff",
+    "password_hash": "$2b$12$P9Nes3SRhkeSAKezIjvx6.4Zb9aX8EHWL81U3zS76U4SmxVeOevB6",
+    "role": "staff",
+    "full_name": "Default Staff",
+    "is_active": true,
+    "created_at": {
+      "$date": "2026-04-20T20:32:00.551Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T20:32:00.551Z"
+    }
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "_id": {
+      "$oid": "69e67b786df13b792ecaecf5"
+    },
+    "site_id": "SITE-0001",
+    "name": "Central Emergency Department"
+  },
+  {
+    "_id": {
+      "$oid": "69e67b786df13b792ecaecf6"
+    },
+    "site_id": "SITE-0002",
+    "name": "Northside Triage Center"
+  },
+  {
+    "_id": {
+      "$oid": "69e67b786df13b792ecaecf7"
+    },
+    "site_id": "SITE-0003",
+    "name": "Riverfront Emergency Unit"
+  },
+  {
+    "_id": {
+      "$oid": "69e67b786df13b792ecaecf8"
+    },
+    "site_id": "SITE-0004",
+    "name": "West City Acute Care"
+  },
+  {
+    "_id": {
+      "$oid": "69e67b786df13b792ecaecf9"
+    },
+    "site_id": "SITE-0005",
+    "name": "South Gate Emergency Hub"
+  }
+]

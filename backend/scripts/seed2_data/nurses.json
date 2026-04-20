@@ -1,0 +1,92 @@
+[
+  {
+    "_id": {
+      "$oid": "69e67b786df13b792ecaecfa"
+    },
+    "nurse_id": "NURSE-0001",
+    "name": "Nurse 01",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "staff"
+  },
+  {
+    "_id": {
+      "$oid": "69e67b786df13b792ecaecfb"
+    },
+    "nurse_id": "NURSE-0002",
+    "name": "Nurse 02",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "staff"
+  },
+  {
+    "_id": {
+      "$oid": "69e67b786df13b792ecaecfc"
+    },
+    "nurse_id": "NURSE-0003",
+    "name": "Nurse 03",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "staff"
+  },
+  {
+    "_id": {
+      "$oid": "69e67b796df13b792ecaecfd"
+    },
+    "nurse_id": "NURSE-0004",
+    "name": "Nurse 04",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "staff"
+  },
+  {
+    "_id": {
+      "$oid": "69e67b796df13b792ecaecfe"
+    },
+    "nurse_id": "NURSE-0005",
+    "name": "Nurse 05",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "staff"
+  },
+  {
+    "_id": {
+      "$oid": "69e67b796df13b792ecaecff"
+    },
+    "nurse_id": "NURSE-0006",
+    "name": "Nurse 06",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "staff"
+  },
+  {
+    "_id": {
+      "$oid": "69e67b796df13b792ecaed00"
+    },
+    "nurse_id": "NURSE-0007",
+    "name": "Nurse 07",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "staff"
+  },
+  {
+    "_id": {
+      "$oid": "69e67b796df13b792ecaed01"
+    },
+    "nurse_id": "NURSE-0008",
+    "name": "Nurse 08",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "staff"
+  },
+  {
+    "_id": {
+      "$oid": "69e67b796df13b792ecaed02"
+    },
+    "nurse_id": "NURSE-0009",
+    "name": "Nurse 09",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "staff"
+  },
+  {
+    "_id": {
+      "$oid": "69e67b796df13b792ecaed03"
+    },
+    "nurse_id": "NURSE-0010",
+    "name": "Nurse 10",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "staff"
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "_id": {
+      "$oid": "69e692b46df13b792ecaed0f"
+    },
+    "doctor_id": "DOC-0001",
+    "name": "Doctor 01",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "admin"
+  },
+  {
+    "_id": {
+      "$oid": "69e692b46df13b792ecaed10"
+    },
+    "doctor_id": "DOC-0002",
+    "name": "Doctor 02",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "admin"
+  },
+  {
+    "_id": {
+      "$oid": "69e692b46df13b792ecaed11"
+    },
+    "doctor_id": "DOC-0003",
+    "name": "Doctor 03",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "admin"
+  },
+  {
+    "_id": {
+      "$oid": "69e692b46df13b792ecaed12"
+    },
+    "doctor_id": "DOC-0004",
+    "name": "Doctor 04",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "admin"
+  },
+  {
+    "_id": {
+      "$oid": "69e692b46df13b792ecaed13"
+    },
+    "doctor_id": "DOC-0005",
+    "name": "Doctor 05",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "admin"
+  },
+  {
+    "_id": {
+      "$oid": "69e695746df13b792ecaed14"
+    },
+    "doctor_id": "DOC-0006",
+    "name": "Doctor 06",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "staff"
+  },
+  {
+    "_id": {
+      "$oid": "69e695746df13b792ecaed15"
+    },
+    "doctor_id": "DOC-0007",
+    "name": "Doctor 07",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "staff"
+  },
+  {
+    "_id": {
+      "$oid": "69e695746df13b792ecaed16"
+    },
+    "doctor_id": "DOC-0008",
+    "name": "Doctor 08",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "staff"
+  },
+  {
+    "_id": {
+      "$oid": "69e695746df13b792ecaed17"
+    },
+    "doctor_id": "DOC-0009",
+    "name": "Doctor 09",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "staff"
+  },
+  {
+    "_id": {
+      "$oid": "69e695746df13b792ecaed18"
+    },
+    "doctor_id": "DOC-0010",
+    "name": "Doctor 10",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "staff"
+  }
+]

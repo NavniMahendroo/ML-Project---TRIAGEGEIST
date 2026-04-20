@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PlatformLayout from "../components/PlatformLayout";
+import { api } from "../lib/api";
 
 const roleRoutes = {
   staff: "/staff",
@@ -10,15 +11,51 @@ const roleRoutes = {
 export default function SignInPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ username: "", password: "", role: "staff" });
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onChange = (event) => {
     const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const onSubmit = (event) => {
+  const onSubmit = async (event) => {
     event.preventDefault();
-    navigate(roleRoutes[form.role] || "/");
+    setError("");
+
+    try {
+      setIsSubmitting(true);
+      if (form.role === "staff") {
+        const auth = await api.nurseLogin(form.username.trim(), form.password);
+        localStorage.setItem(
+          "staffAuth",
+          JSON.stringify({
+            nurse_id: auth.nurse_id,
+            name: auth.name,
+            role: auth.role,
+            logged_in_at: new Date().toISOString(),
+          }),
+        );
+        localStorage.removeItem("adminAuth");
+      } else {
+        const auth = await api.doctorLogin(form.username.trim(), form.password);
+        localStorage.setItem(
+          "adminAuth",
+          JSON.stringify({
+            doctor_id: auth.doctor_id,
+            name: auth.name,
+            role: auth.role,
+            logged_in_at: new Date().toISOString(),
+          }),
+        );
+        localStorage.removeItem("staffAuth");
+      }
+      navigate(roleRoutes[form.role] || "/");
+    } catch (submitError) {
+      setError(submitError.message || "Sign in failed.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -36,7 +73,7 @@ export default function SignInPage() {
               name="username"
               value={form.username}
               onChange={onChange}
-              placeholder="staff.id"
+              placeholder={form.role === "staff" ? "NURSE-0001" : "DOC-0001"}
               required
             />
           </label>
@@ -62,7 +99,15 @@ export default function SignInPage() {
             </select>
           </label>
 
-          <button className="btn-primary w-full" type="submit">Continue</button>
+          <button className="btn-primary w-full" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Signing in..." : "Continue"}
+          </button>
+          {error ? <p className="text-sm text-rose-300">{error}</p> : null}
+          {form.role === "staff" ? (
+            <p className="text-xs text-slate-300/80">Use your Nurse ID and password. Default seeded password is your Nurse ID.</p>
+          ) : (
+            <p className="text-xs text-slate-300/80">Use your Doctor ID and password. Default seeded password is your Doctor ID.</p>
+          )}
         </form>
       </section>
     </PlatformLayout>

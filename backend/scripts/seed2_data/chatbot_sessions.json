@@ -1,0 +1,82 @@
+[
+  {
+    "_id": {
+      "$oid": "69e6848071f4288de742bef9"
+    },
+    "session_id": "CS-0001",
+    "vapi_session_id": null,
+    "patient_id": null,
+    "user_role": null,
+    "status": "active",
+    "conversation_raw": [],
+    "collected_fields": {},
+    "fields_missing": [],
+    "collection_confidence": null,
+    "created_at": {
+      "$date": "2026-04-20T19:54:40.614Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T19:54:40.614Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69e685db37e740f67e97560e"
+    },
+    "session_id": "CS-0002",
+    "vapi_session_id": null,
+    "patient_id": null,
+    "user_role": null,
+    "status": "active",
+    "conversation_raw": [],
+    "collected_fields": {},
+    "fields_missing": [],
+    "collection_confidence": null,
+    "created_at": {
+      "$date": "2026-04-20T20:00:27.472Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T20:00:27.472Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69e68b18dc1f0bb9cfb6fe18"
+    },
+    "session_id": "CS-0003",
+    "vapi_session_id": null,
+    "patient_id": null,
+    "user_role": null,
+    "status": "active",
+    "conversation_raw": [],
+    "collected_fields": {},
+    "fields_missing": [],
+    "collection_confidence": null,
+    "created_at": {
+      "$date": "2026-04-20T20:22:48.688Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T20:22:48.688Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69e692a95d386d0f5dbad61a"
+    },
+    "session_id": "CS-0004",
+    "vapi_session_id": null,
+    "patient_id": null,
+    "user_role": null,
+    "status": "active",
+    "conversation_raw": [],
+    "collected_fields": {},
+    "fields_missing": [],
+    "collection_confidence": null,
+    "created_at": {
+      "$date": "2026-04-20T20:55:05.149Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T20:55:05.149Z"
+    }
+  }
+]

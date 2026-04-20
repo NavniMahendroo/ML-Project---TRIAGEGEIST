@@ -1,21 +1,31 @@
-pandas
-numpy
-pyarrow
+# Core ML/Data
+catboost
+joblib
 matplotlib
-seaborn
+numpy
+pandas
+pyarrow
 scikit-learn
 scipy
-joblib
-catboost
-torch
-transformers
-tqdm
+seaborn
 shap
+torch
+tqdm
+transformers
+
+# API/Backend
 fastapi
 pydantic
-uvicorn[standard]
+pydantic
 pymongo
 python-dotenv
+uvicorn[standard]
+
+# Chatbot/LLM
+groq
+langgraph
+ollama
+rapidfuzz
 rapidfuzz
 langgraph
 ollama

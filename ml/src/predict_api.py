@@ -3,9 +3,9 @@ import numpy as np
 import logging
 import os
 
-# Force offline mode to prevent any HTTP requests on startup
-os.environ["TRANSFORMERS_OFFLINE"] = "1"
-os.environ["HF_HUB_OFFLINE"] = "1"
+# Default to offline mode unless explicitly overridden in the runtime environment.
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
 
 import joblib
 import torch
@@ -82,12 +82,36 @@ def load_model():
             try:
                 _tokenizer = AutoTokenizer.from_pretrained(config.BERT_MODEL_NAME, local_files_only=True)
                 _bert_model = AutoModel.from_pretrained(config.BERT_MODEL_NAME, local_files_only=True)
-            except Exception:
-                log.info("Local BioBERT files not found. Attempting to download from Hugging Face...")
-                _tokenizer = AutoTokenizer.from_pretrained(config.BERT_MODEL_NAME)
-                _bert_model = AutoModel.from_pretrained(config.BERT_MODEL_NAME)
-            _device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-            _bert_model = _bert_model.to(_device)
+            except Exception as local_exc:
+                is_offline = (
+                    os.getenv("HF_HUB_OFFLINE", "0") == "1"
+                    or os.getenv("TRANSFORMERS_OFFLINE", "0") == "1"
+                )
+                if is_offline:
+                    log.warning(
+                        "Local BioBERT files not found while offline. Continuing without text embeddings. Error: %s",
+                        local_exc,
+                    )
+                    _tokenizer = None
+                    _bert_model = None
+                else:
+                    log.info("Local BioBERT files not found. Attempting to download from Hugging Face...")
+                    try:
+                        _tokenizer = AutoTokenizer.from_pretrained(config.BERT_MODEL_NAME)
+                        _bert_model = AutoModel.from_pretrained(config.BERT_MODEL_NAME)
+                    except Exception as remote_exc:
+                        log.warning(
+                            "Failed to download BioBERT. Continuing without text embeddings. Error: %s",
+                            remote_exc,
+                        )
+                        _tokenizer = None
+                        _bert_model = None
+
+            if _bert_model is not None:
+                _device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+                _bert_model = _bert_model.to(_device)
+            else:
+                _device = None
         else:
             log.info('No PCA file found for this version. Skipping BioBERT loading.')
             
@@ -116,15 +140,17 @@ def predict_patient(patient_data: dict) -> dict:
 
     df = pd.DataFrame([patient_data])
 
-    # Extract BERT embedding for the single record
+    # Extract BERT embedding for the single record.
+    # If BioBERT isn't available (offline cache miss), fill PCA text features as NaN.
     if 'chief_complaint_raw' in df.columns and _pca is not None:
-        texts = df['chief_complaint_raw'].fillna('No Data').to_list()
-        bert_features = get_bert_embeddings(texts, _tokenizer, _bert_model, _device)
-        bert_pca = _pca.transform(bert_features)
-        
-        # Match the EXACT 1-indexed column names we used in v1.0.2 CatBoost Training!
         bert_cols = [f'biobert_pca_{i+1}' for i in range(config.PCA_COMPONENTS)]
-        df_bert = pd.DataFrame(bert_pca, columns=bert_cols, index=df.index)
+        if _tokenizer is not None and _bert_model is not None and _device is not None:
+            texts = df['chief_complaint_raw'].fillna('No Data').to_list()
+            bert_features = get_bert_embeddings(texts, _tokenizer, _bert_model, _device)
+            bert_pca = _pca.transform(bert_features)
+            df_bert = pd.DataFrame(bert_pca, columns=bert_cols, index=df.index)
+        else:
+            df_bert = pd.DataFrame(np.nan, columns=bert_cols, index=df.index)
         df = pd.concat([df, df_bert], axis=1)
 
     # Ensure incoming data perfectly matches the CatBoost training schema

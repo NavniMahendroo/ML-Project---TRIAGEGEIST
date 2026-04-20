@@ -10,6 +10,8 @@ from src.triage.service import load_ml_model, get_engine_status
 from src.triage.router import router as triage_router
 from src.patients.router import router as patients_router
 from src.chatbot.router import router as chatbot_router
+from src.nurses.router import router as nurses_router
+from src.doctors.router import router as doctors_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger(__name__)
@@ -33,6 +35,8 @@ app.add_middleware(
 app.include_router(triage_router)
 app.include_router(patients_router)
 app.include_router(chatbot_router)
+app.include_router(nurses_router)
+app.include_router(doctors_router)
 
 @app.on_event("startup")
 def startup_event():

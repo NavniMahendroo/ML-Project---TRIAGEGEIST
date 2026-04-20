@@ -1,0 +1,202 @@
+[
+  {
+    "_id": {
+      "$oid": "69e67b796df13b792ecaed04"
+    },
+    "patient_id": "TG-0001",
+    "age": 27,
+    "age_group": "young_adult",
+    "bmi": 22.851,
+    "created_at": {
+      "$date": "2026-04-20T19:16:08.719Z"
+    },
+    "height_cm": 178.0,
+    "insurance_type": "private",
+    "language": "english",
+    "name": "Aarav Sharma",
+    "num_active_medications": 1,
+    "num_comorbidities": 0,
+    "num_prior_admissions_12m": 0,
+    "num_prior_ed_visits_12m": 1,
+    "sex": "male",
+    "updated_at": {
+      "$date": "2026-04-20T19:16:08.719Z"
+    },
+    "weight_kg": 72.4
+  },
+  {
+    "_id": {
+      "$oid": "69e67b796df13b792ecaed05"
+    },
+    "patient_id": "TG-0002",
+    "age": 43,
+    "age_group": "middle_aged",
+    "bmi": 25.911,
+    "created_at": {
+      "$date": "2026-04-20T19:16:08.719Z"
+    },
+    "height_cm": 162.0,
+    "insurance_type": "government",
+    "language": "hindi",
+    "name": "Priya Nair",
+    "num_active_medications": 3,
+    "num_comorbidities": 2,
+    "num_prior_admissions_12m": 1,
+    "num_prior_ed_visits_12m": 2,
+    "sex": "female",
+    "updated_at": {
+      "$date": "2026-04-20T19:16:08.719Z"
+    },
+    "weight_kg": 68.0
+  },
+  {
+    "_id": {
+      "$oid": "69e67b796df13b792ecaed06"
+    },
+    "patient_id": "TG-0003",
+    "age": 61,
+    "age_group": "middle_aged",
+    "bmi": 28.795,
+    "created_at": {
+      "$date": "2026-04-20T19:16:08.719Z"
+    },
+    "height_cm": 171.0,
+    "insurance_type": "self_pay",
+    "language": "english",
+    "name": "Rahul Verma",
+    "num_active_medications": 2,
+    "num_comorbidities": 1,
+    "num_prior_admissions_12m": 0,
+    "num_prior_ed_visits_12m": 0,
+    "sex": "male",
+    "updated_at": {
+      "$date": "2026-04-20T19:16:08.719Z"
+    },
+    "weight_kg": 84.2
+  },
+  {
+    "_id": {
+      "$oid": "69e67b796df13b792ecaed07"
+    },
+    "patient_id": "TG-0004",
+    "age": 35,
+    "age_group": "young_adult",
+    "bmi": 33.609,
+    "created_at": {
+      "$date": "2026-04-20T19:16:08.719Z"
+    },
+    "height_cm": 165.0,
+    "insurance_type": "private",
+    "language": "urdu",
+    "name": "Fatima Khan",
+    "num_active_medications": 4,
+    "num_comorbidities": 3,
+    "num_prior_admissions_12m": 1,
+    "num_prior_ed_visits_12m": 3,
+    "sex": "female",
+    "updated_at": {
+      "$date": "2026-04-20T19:16:08.719Z"
+    },
+    "weight_kg": 91.5
+  },
+  {
+    "_id": {
+      "$oid": "69e67b796df13b792ecaed08"
+    },
+    "patient_id": "TG-0005",
+    "age": 74,
+    "age_group": "elderly",
+    "bmi": 26.715,
+    "created_at": {
+      "$date": "2026-04-20T19:16:08.719Z"
+    },
+    "height_cm": 169.0,
+    "insurance_type": "medicare",
+    "language": "english",
+    "name": "Joseph Dsouza",
+    "num_active_medications": 6,
+    "num_comorbidities": 4,
+    "num_prior_admissions_12m": 2,
+    "num_prior_ed_visits_12m": 4,
+    "sex": "male",
+    "updated_at": {
+      "$date": "2026-04-20T19:16:08.719Z"
+    },
+    "weight_kg": 76.3
+  },
+  {
+    "_id": {
+      "$oid": "69e67b796df13b792ecaed09"
+    },
+    "patient_id": "TG-0006",
+    "age": 31,
+    "age_group": "young_adult",
+    "bmi": 22.93,
+    "created_at": {
+      "$date": "2026-04-20T19:16:08.719Z"
+    },
+    "height_cm": 160.0,
+    "insurance_type": "private",
+    "language": "english",
+    "name": "Meera Iyer",
+    "num_active_medications": 0,
+    "num_comorbidities": 0,
+    "num_prior_admissions_12m": 0,
+    "num_prior_ed_visits_12m": 0,
+    "sex": "female",
+    "updated_at": {
+      "$date": "2026-04-20T19:16:08.719Z"
+    },
+    "weight_kg": 58.7
+  },
+  {
+    "_id": {
+      "$oid": "69e67b796df13b792ecaed0a"
+    },
+    "patient_id": "TG-0007",
+    "age": 49,
+    "age_group": "middle_aged",
+    "bmi": 26.126,
+    "created_at": {
+      "$date": "2026-04-20T19:16:08.719Z"
+    },
+    "height_cm": 174.0,
+    "insurance_type": "employer",
+    "language": "hindi",
+    "name": "Karan Malhotra",
+    "num_active_medications": 2,
+    "num_comorbidities": 1,
+    "num_prior_admissions_12m": 0,
+    "num_prior_ed_visits_12m": 1,
+    "sex": "male",
+    "updated_at": {
+      "$date": "2026-04-20T19:16:08.719Z"
+    },
+    "weight_kg": 79.1
+  },
+  {
+    "_id": {
+      "$oid": "69e67b796df13b792ecaed0b"
+    },
+    "patient_id": "TG-0008",
+    "age": 22,
+    "age_group": "young_adult",
+    "bmi": 21.908,
+    "created_at": {
+      "$date": "2026-04-20T19:16:08.719Z"
+    },
+    "height_cm": 157.0,
+    "insurance_type": "self_pay",
+    "language": "bengali",
+    "name": "Ananya Bose",
+    "num_active_medications": 1,
+    "num_comorbidities": 0,
+    "num_prior_admissions_12m": 0,
+    "num_prior_ed_visits_12m": 0,
+    "sex": "female",
+    "updated_at": {
+      "$date": "2026-04-20T19:16:08.719Z"
+    },
+    "weight_kg": 54.0
+  }
+]

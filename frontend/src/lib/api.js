@@ -12,6 +12,12 @@ async function post(path, body) {
 }
 
 export const api = {
+  nurseLogin: (nurseId, password) =>
+    post("/nurses/login", { nurse_id: nurseId, password, role: "staff" }),
+
+  doctorLogin: (doctorId, password) =>
+    post("/doctors/login", { doctor_id: doctorId, password, role: "admin" }),
+
   startSession: (vapiSessionId = null) =>
     post("/chatbot/session/start", { vapi_session_id: vapiSessionId }),
 

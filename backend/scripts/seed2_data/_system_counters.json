@@ -1,0 +1,10 @@
+[
+  {
+    "_id": "patients",
+    "seq": 8
+  },
+  {
+    "_id": "chatbot_sessions",
+    "seq": 4
+  }
+]
