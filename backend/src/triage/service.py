@@ -132,6 +132,10 @@ def _create_visit_document(patient_document: dict, visit_payload: dict, predicti
         triage_acuity=prediction["triage_acuity"],
         urgency_label=prediction["urgency_label"],
         engine=prediction["engine"],
+        data_source=visit_payload.get("data_source", "form"),
+        chatbot_session_id=visit_payload.get("chatbot_session_id"),
+        chief_complaint_normalized=visit_payload.get("chief_complaint_normalized"),
+        fields_missing=visit_payload.get("fields_missing"),
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
     ).model_dump()

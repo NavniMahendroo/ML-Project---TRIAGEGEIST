@@ -1,0 +1,13 @@
+{
+    "model_version": "v1.0.2-c",
+    "best_fold": 4,
+    "best_fold_accuracy": 0.861625,
+    "oof_pipeline_accuracy": 0.85895,
+    "fold_accuracies": {
+        "fold_1": 0.860938,
+        "fold_2": 0.853625,
+        "fold_3": 0.860375,
+        "fold_4": 0.861625,
+        "fold_5": 0.858187
+    }
+}

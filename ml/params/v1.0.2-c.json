@@ -1,0 +1,18 @@
+{
+    "MODEL_VERSION": "v1.0.2-c",
+    "DESCRIPTION": "Fallback Triage Acuity Classifier. Identical to v1.0.2 but trained without the 25 medical history (hx_*) features. Used when patient history is unavailable at ED arrival.",
+
+    "CATBOOST_PARAMS": {
+        "iterations": 10000,
+        "task_type": "GPU",
+        "learning_rate": 0.05,
+        "depth": 6,
+        "loss_function": "MultiClass",
+        "early_stopping_rounds": 50,
+        "verbose": 100,
+        "random_seed": 42
+    },
+
+    "CV_FOLDS": 5,
+    "RANDOM_SEED": 42
+}

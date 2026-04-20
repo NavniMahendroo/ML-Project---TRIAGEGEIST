@@ -1,0 +1,14 @@
+V1.0.2-c FALLBACK TRIAGE CLASSIFIER (No Medical History)
+OOF Accuracy: 85.89%
+
+              precision    recall  f1-score   support
+
+           1       0.97      0.92      0.95      3222
+           2       0.97      0.97      0.97     13439
+           3       0.89      0.89      0.89     28921
+           4       0.77      0.78      0.78     23020
+           5       0.78      0.79      0.79     11398
+
+    accuracy                           0.86     80000
+   macro avg       0.88      0.87      0.87     80000
+weighted avg       0.86      0.86      0.86     80000

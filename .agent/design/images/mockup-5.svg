@@ -1,0 +1,65 @@
+<svg width="800" height="500" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif">
+  <rect width="800" height="500" fill="#0a0a0a"/>
+  <defs>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="0.8" fill="#1f1f1f"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="500" fill="url(#dots)"/>
+
+  <!-- Left panel -->
+  <rect width="360" height="500" fill="#0d0d0d"/>
+
+  <!-- Left branding -->
+  <rect x="60" y="80" width="6" height="24" fill="#2563eb" rx="1"/>
+  <rect x="52" y="88" width="22" height="6" fill="#2563eb" rx="1"/>
+  <text x="86" y="98" fill="#f5f5f5" font-size="18" font-weight="700">Delhi Hospital</text>
+  <text x="86" y="116" fill="#2563eb" font-size="11" letter-spacing="2">TRIAGEGEIST</text>
+
+  <text x="60" y="180" fill="#f5f5f5" font-size="22" font-weight="700">Staff Portal</text>
+  <text x="60" y="205" fill="#6b7280" font-size="12">Access your triage dashboard</text>
+  <text x="60" y="222" fill="#6b7280" font-size="12">and patient management tools.</text>
+
+  <!-- Stats -->
+  <rect x="60" y="270" width="100" height="60" fill="#111111" rx="8"/>
+  <text x="110" y="298" fill="#3b82f6" font-size="20" font-weight="700" text-anchor="middle">99%</text>
+  <text x="110" y="316" fill="#6b7280" font-size="9" text-anchor="middle">Model Accuracy</text>
+
+  <rect x="175" y="270" width="100" height="60" fill="#111111" rx="8"/>
+  <text x="225" y="298" fill="#22c55e" font-size="20" font-weight="700" text-anchor="middle">Live</text>
+  <text x="225" y="316" fill="#6b7280" font-size="9" text-anchor="middle">System Status</text>
+
+  <!-- Divider -->
+  <rect x="359" y="0" width="1" height="500" fill="#1f1f1f"/>
+
+  <!-- Right panel — login form -->
+  <text x="560" y="120" fill="#f5f5f5" font-size="18" font-weight="700" text-anchor="middle">Sign In</text>
+  <text x="560" y="140" fill="#6b7280" font-size="11" text-anchor="middle">Enter your staff credentials</text>
+
+  <!-- Nurse ID field -->
+  <text x="420" y="180" fill="#9ca3af" font-size="11">Nurse ID / Staff ID</text>
+  <rect x="420" y="188" width="280" height="36" fill="#111111" rx="8" stroke="#2a2a2a" stroke-width="1"/>
+  <text x="436" y="211" fill="#4b5563" font-size="12">e.g. NURSE-001</text>
+
+  <!-- PIN field -->
+  <text x="420" y="244" fill="#9ca3af" font-size="11">4-Digit PIN</text>
+  <rect x="420" y="252" width="280" height="36" fill="#111111" rx="8" stroke="#2a2a2a" stroke-width="1"/>
+  <!-- PIN dots -->
+  <circle cx="448" cy="270" r="5" fill="#4b5563"/>
+  <circle cx="468" cy="270" r="5" fill="#4b5563"/>
+  <circle cx="488" cy="270" r="5" fill="#4b5563"/>
+  <circle cx="508" cy="270" r="5" fill="#1f1f1f"/>
+
+  <!-- Role selector -->
+  <text x="420" y="310" fill="#9ca3af" font-size="11">Role</text>
+  <rect x="420" y="318" width="280" height="36" fill="#111111" rx="8" stroke="#2a2a2a" stroke-width="1"/>
+  <text x="436" y="341" fill="#f5f5f5" font-size="12">Nurse</text>
+  <text x="680" y="341" fill="#6b7280" font-size="10" text-anchor="end">▾</text>
+
+  <!-- Login button -->
+  <rect x="420" y="374" width="280" height="40" fill="#2563eb" rx="8"/>
+  <text x="560" y="399" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">Sign In →</text>
+
+  <!-- Back link -->
+  <text x="560" y="432" fill="#6b7280" font-size="11" text-anchor="middle">← Back to Home</text>
+</svg>

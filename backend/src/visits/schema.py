@@ -12,7 +12,7 @@ class VisitDocument(BaseModel):
     nurse_id: str
     arrival_mode: str
     arrival_time: datetime
-    transport_origin: str
+    transport_origin: str | None = None
     pain_location: str
     mental_status_triage: str
     chief_complaint_raw: str
@@ -32,5 +32,9 @@ class VisitDocument(BaseModel):
     triage_acuity: int
     urgency_label: str
     engine: str
+    data_source: str = "form"
+    chatbot_session_id: str | None = None
+    chief_complaint_normalized: str | None = None
+    fields_missing: list[str] | None = None
     created_at: datetime
     updated_at: datetime
