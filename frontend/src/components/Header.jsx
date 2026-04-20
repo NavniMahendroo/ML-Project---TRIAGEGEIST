@@ -37,10 +37,16 @@ export default function Header({ status, isSpeaking, onEndCall }) {
           </button>
         )}
         <a
-          href="/triage"
+          href="/patient/form"
           style={{ fontSize: "12px", color: "#93c5fd", background: "#1e40af", borderRadius: "8px", padding: "6px 14px", fontWeight: "600", textDecoration: "none", border: "1px solid #3b82f6" }}
         >
-          Staff Login
+          Patient Form
+        </a>
+        <a
+          href="/signin"
+          style={{ fontSize: "12px", color: "#c7d2fe", background: "#312e81", borderRadius: "8px", padding: "6px 14px", fontWeight: "600", textDecoration: "none", border: "1px solid #6366f1" }}
+        >
+          Staff/Admin Login
         </a>
       </div>
     </div>

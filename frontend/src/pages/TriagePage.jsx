@@ -1,7 +1,7 @@
 import React from "react";
 import { useTriage } from "../hooks/useTriage";
 import { SeverityCard, EmptyState } from "../components/SeverityCard";
-import { MetricCard, InputField, SelectField, TextAreaField, Spinner } from "../components/UI";
+import { InputField, SelectField, TextAreaField, Spinner } from "../components/UI";
 
 function renderOptions(options = []) {
   return options.map((option) => (
@@ -27,35 +27,6 @@ function TriagePage() {
 
   return (
     <>
-      <header className="animate-fade-up mb-8">
-        <div className="panel-soft panel-glow rounded-3xl border p-6 md:p-8">
-          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="font-heading text-xs uppercase tracking-[0.25em] text-cyan-200">
-                Triagegeist Phase 1-3
-              </p>
-              <h1 className="font-heading mt-3 text-3xl leading-tight text-white md:text-5xl">
-                New Patient Registration
-                <br />
-                <span className="bg-gradient-to-r from-cyan-300 to-teal-300 bg-clip-text text-transparent">
-                  and Triage Workflow
-                </span>
-              </h1>
-              <p className="mt-3 max-w-2xl text-base text-slate-200/90">
-                This flow creates normalized patient and visit records, reconstructs the v1.0.2
-                feature payload, and returns a backend-labeled urgency result for display.
-              </p>
-            </div>
-
-            <div className="flex shrink-0 gap-3">
-              <MetricCard label="Model" value="CatBoost v1.0.2" />
-              <MetricCard label="Payload" value="61 Features" />
-              <MetricCard label="Scope" value="Phase 1-3" />
-            </div>
-          </div>
-        </div>
-      </header>
-
       <section className="animate-fade-up grid gap-6 lg:grid-cols-[1.2fr_0.95fr]">
         <section className="panel-soft rounded-3xl border p-6 md:p-8">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
