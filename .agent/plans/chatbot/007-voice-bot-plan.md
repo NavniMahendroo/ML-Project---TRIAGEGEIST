@@ -1,4 +1,7 @@
-# 007 — Voice-Enabled Data Acquisition (Chatbot Implementation Plan)
+# 007 — Voice-Enabled Data Acquisition (Original Sketch — Superseded)
+
+> This was the original rough plan. The actual implementation plan is in chatbot-implementation-plan.md.
+> Kept here for historical reference only. Do not use for implementation.
 
 Breaking the voice AI implementation into two distinct phases ensures we get a working feature quickly and avoid getting bogged down in complex architecture.
 

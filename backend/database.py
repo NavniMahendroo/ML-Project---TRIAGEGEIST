@@ -36,6 +36,7 @@ def initialize_database():
         "nurses": _db["nurses"],
         "doctors": _db["doctors"],
         "_system_counters": _db["_system_counters"],
+        "chatbot_sessions": _db["chatbot_sessions"],
     }
     log.info("Connected to MongoDB at %s/%s", MONGO_URI, MONGO_DB_NAME)
     return _db
@@ -71,3 +72,5 @@ def ensure_indexes():
     get_collection("doctors").create_index("doctor_id", unique=True)
     # MongoDB already guarantees uniqueness for _id automatically.
     get_collection("_system_counters").create_index("_id")
+    get_collection("chatbot_sessions").create_index("session_id", unique=True)
+    get_collection("chatbot_sessions").create_index("patient_id")

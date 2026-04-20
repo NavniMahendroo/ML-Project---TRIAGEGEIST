@@ -56,13 +56,13 @@ class VisitInput(BaseModel):
     site_id: str = Field(..., min_length=1)
     nurse_id: str = Field(..., min_length=1)
     arrival_mode: str = Field(...)
-    transport_origin: str = Field(...)
+    transport_origin: str | None = Field(default=None)
     pain_location: str = Field(...)
     mental_status_triage: str = Field(...)
     chief_complaint_raw: str = Field(..., min_length=1)
     chief_complaint_system: str | None = Field(default=None)
     heart_rate: float | None = Field(default=None, ge=20, le=260)
-    respiratory_rate: float | None = Field(default=None, ge=0, le=80)
+    respiratory_rate: float | None = Field(default=None, ge=0, le=100)
     spo2: float | None = Field(default=None, ge=0, le=100)
     systolic_bp: float | None = Field(default=None, ge=40, le=300)
     diastolic_bp: float | None = Field(default=None, ge=20, le=200)
@@ -70,6 +70,10 @@ class VisitInput(BaseModel):
     pain_score: int | None = Field(default=None, ge=0, le=10)
     gcs_total: int | None = Field(default=None, ge=3, le=15)
     arrival_time: datetime | None = Field(default=None)
+    data_source: str = Field(default="form")
+    chatbot_session_id: str | None = Field(default=None)
+    chief_complaint_normalized: str | None = Field(default=None)
+    fields_missing: list[str] | None = Field(default=None)
 
     @field_validator("site_id", "nurse_id", "chief_complaint_raw")
     @classmethod
@@ -86,7 +90,9 @@ class VisitInput(BaseModel):
 
     @field_validator("transport_origin")
     @classmethod
-    def validate_transport_origin(cls, value: str) -> str:
+    def validate_transport_origin(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
         return normalize_enum(value, TRANSPORT_ORIGIN_OPTIONS)
 
     @field_validator("pain_location")
@@ -107,8 +113,6 @@ class TriageSubmission(BaseModel):
 
     @model_validator(mode="after")
     def validate_patient_source(self):
-        if not self.patient_id and not self.patient:
-            raise ValueError("Provide either patient_id for an existing patient or patient data for a new patient.")
         if self.patient_id and self.patient:
             raise ValueError("Provide either patient_id or patient data, not both.")
         return self
