@@ -198,5 +198,180 @@
       "$date": "2026-04-20T19:16:08.719Z"
     },
     "weight_kg": 54.0
+  },
+  {
+    "_id": {
+      "$oid": "69e699a6a37c9785dd4b2b5a"
+    },
+    "patient_id": "TG-0009",
+    "name": "Tanuj",
+    "age": 20,
+    "sex": "M",
+    "language": "English",
+    "insurance_type": "public",
+    "num_prior_ed_visits_12m": 1,
+    "num_prior_admissions_12m": 0,
+    "num_active_medications": 2,
+    "num_comorbidities": 2,
+    "weight_kg": 85.0,
+    "height_cm": 177.0,
+    "age_group": "young_adult",
+    "bmi": 27.131,
+    "created_at": {
+      "$date": "2026-04-20T21:24:54.188Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T21:24:54.539Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69e69a11b646cbdb994a5493"
+    },
+    "patient_id": "TG-0010",
+    "name": "Seed Check Patient",
+    "age": 29,
+    "sex": "male",
+    "language": "english",
+    "insurance_type": "self_pay",
+    "num_prior_ed_visits_12m": 0,
+    "num_prior_admissions_12m": 0,
+    "num_active_medications": 0,
+    "num_comorbidities": 0,
+    "weight_kg": 70.0,
+    "height_cm": 175.0,
+    "age_group": "young_adult",
+    "bmi": 22.857,
+    "created_at": {
+      "$date": "2026-04-20T21:26:41.046Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T21:26:41.046Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69e6a31376fdbb5b1ba62ae1"
+    },
+    "patient_id": "TG-0011",
+    "name": "Rishika",
+    "age": 20,
+    "sex": "M",
+    "language": "English",
+    "insurance_type": "public",
+    "num_prior_ed_visits_12m": 1,
+    "num_prior_admissions_12m": 0,
+    "num_active_medications": 2,
+    "num_comorbidities": 2,
+    "weight_kg": 85.0,
+    "height_cm": 177.0,
+    "age_group": "young_adult",
+    "bmi": 27.131,
+    "created_at": {
+      "$date": "2026-04-20T22:05:07.473Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T22:05:07.889Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69e6a31676fdbb5b1ba62ae3"
+    },
+    "patient_id": "TG-0012",
+    "name": "Rishika",
+    "age": 20,
+    "sex": "M",
+    "language": "English",
+    "insurance_type": "public",
+    "num_prior_ed_visits_12m": 1,
+    "num_prior_admissions_12m": 0,
+    "num_active_medications": 2,
+    "num_comorbidities": 2,
+    "weight_kg": 85.0,
+    "height_cm": 177.0,
+    "age_group": "young_adult",
+    "bmi": 27.131,
+    "created_at": {
+      "$date": "2026-04-20T22:05:10.110Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T22:05:10.134Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69e6a31676fdbb5b1ba62ae5"
+    },
+    "patient_id": "TG-0013",
+    "name": "Rishika",
+    "age": 20,
+    "sex": "M",
+    "language": "English",
+    "insurance_type": "public",
+    "num_prior_ed_visits_12m": 1,
+    "num_prior_admissions_12m": 0,
+    "num_active_medications": 2,
+    "num_comorbidities": 2,
+    "weight_kg": 85.0,
+    "height_cm": 177.0,
+    "age_group": "young_adult",
+    "bmi": 27.131,
+    "created_at": {
+      "$date": "2026-04-20T22:05:10.225Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T22:05:10.243Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69e6a8e6cf1f3fe27d3d42af"
+    },
+    "patient_id": "TG-0014",
+    "name": "Bhavya Goel",
+    "age": 23,
+    "sex": "M",
+    "language": "English",
+    "insurance_type": "private",
+    "num_prior_ed_visits_12m": 1,
+    "num_prior_admissions_12m": 0,
+    "num_active_medications": 2,
+    "num_comorbidities": 3,
+    "weight_kg": 70.0,
+    "height_cm": 177.0,
+    "age_group": "young_adult",
+    "bmi": 22.344,
+    "created_at": {
+      "$date": "2026-04-20T22:29:58.537Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T22:29:58.892Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69e6a99ecf1f3fe27d3d42b1"
+    },
+    "patient_id": "TG-0015",
+    "name": "navni",
+    "age": 20,
+    "sex": "M",
+    "language": "English",
+    "insurance_type": "public",
+    "num_prior_ed_visits_12m": 1,
+    "num_prior_admissions_12m": 0,
+    "num_active_medications": 1,
+    "num_comorbidities": 2,
+    "weight_kg": 71.0,
+    "height_cm": 157.0,
+    "age_group": "young_adult",
+    "bmi": 28.804,
+    "created_at": {
+      "$date": "2026-04-20T22:33:02.640Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T22:33:02.771Z"
+    }
   }
 ]

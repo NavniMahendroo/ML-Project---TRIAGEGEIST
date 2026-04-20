@@ -59,11 +59,20 @@ function SeverityCard({ result, severity }) {
         </div>
       </div>
 
-      <div className={`mt-5 rounded-2xl border border-cyan-300/20 bg-cyan-400/10 p-4 ${result.chief_complaint_system ? "" : "opacity-80"}`}>
-        <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/70">Chief Complaint System</p>
-        <p className="mt-1 text-sm text-cyan-50">
-          {result.chief_complaint_system || "Pending future classifier"}
-        </p>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className={`rounded-2xl border border-cyan-300/20 bg-cyan-400/10 p-4 ${result.chief_complaint_system ? "" : "opacity-80"}`}>
+          <p className="text-xs uppercase tracking-[0.16em] text-cyan-100/70">Chief Complaint System</p>
+          <p className="mt-1 text-sm text-cyan-50">
+            {result.chief_complaint_system || "Pending future classifier"}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Routed Specialty</p>
+          <p className="mt-1 text-sm text-white">{result.target_specialty || "Emergency"}</p>
+          <p className="mt-2 text-xs text-slate-400">
+            Assigned Doctor: {result.assigned_doctor_id || "Awaiting doctor allocation"}
+          </p>
+        </div>
       </div>
 
       <div className="mt-6 grid grid-cols-3 gap-3">

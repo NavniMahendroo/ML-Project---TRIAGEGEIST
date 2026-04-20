@@ -193,6 +193,16 @@ function ResultScreen({ result }) {
           )}
 
           <div className="mt-6">
+            <p className="text-xs uppercase tracking-widest text-[#9ca3af]">Routed Specialty</p>
+            <p className="mt-2 text-lg font-semibold text-[#f5f5f5]">
+              {result.target_specialty || "Emergency"}
+            </p>
+            <p className="mt-1 text-xs text-[#6b7280]">
+              Assigned Doctor: {result.assigned_doctor_id || "Awaiting doctor allocation"}
+            </p>
+          </div>
+
+          <div className="mt-6">
             <p className="text-xs uppercase tracking-widest text-[#9ca3af]">Queue Number</p>
             <p className="mt-1 text-5xl font-black text-[#f5f5f5]">
               #{String(result.visit_id?.replace(/\D/g, "")).padStart(3, "0")}

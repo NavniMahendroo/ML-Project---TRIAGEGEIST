@@ -32,6 +32,12 @@ class VisitDocument(BaseModel):
     triage_acuity: int
     urgency_label: str
     engine: str
+    target_specialty: str | None = None
+    assigned_doctor_id: str | None = None
+    assignment_status: str = "unassigned_no_match"
+    attended_by_doctor: bool = False
+    attended_at: datetime | None = None
+    attended_by_doctor_id: str | None = None
     data_source: str = "form"
     chatbot_session_id: str | None = None
     chief_complaint_normalized: str | None = None

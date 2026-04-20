@@ -1,1 +1,276 @@
-[]
+[
+  {
+    "_id": {
+      "$oid": "69e699a6a37c9785dd4b2b5b"
+    },
+    "visit_id": "VT-0001",
+    "patient_id": "TG-0009",
+    "site_id": "SITE-0005",
+    "nurse_id": "NURSE-0001",
+    "arrival_mode": "walk-in",
+    "arrival_time": {
+      "$date": "2026-04-20T21:24:54.172Z"
+    },
+    "transport_origin": "home",
+    "pain_location": "multiple",
+    "mental_status_triage": "confused",
+    "chief_complaint_raw": "severe headache",
+    "chief_complaint_system": null,
+    "heart_rate": 77.0,
+    "respiratory_rate": 25.0,
+    "temperature_c": 38.0,
+    "spo2": 89.0,
+    "systolic_bp": 140.0,
+    "diastolic_bp": 100.0,
+    "gcs_total": 3,
+    "pain_score": 8,
+    "mean_arterial_pressure": 113.333,
+    "pulse_pressure": 40.0,
+    "shock_index": 0.55,
+    "news2_score": 9.0,
+    "triage_acuity": 1,
+    "urgency_label": "Resuscitation",
+    "engine": "ml_pipeline",
+    "data_source": "form",
+    "chatbot_session_id": null,
+    "chief_complaint_normalized": null,
+    "fields_missing": null,
+    "created_at": {
+      "$date": "2026-04-20T21:24:54.535Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T21:24:54.535Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69e6a31376fdbb5b1ba62ae2"
+    },
+    "visit_id": "VT-0002",
+    "patient_id": "TG-0011",
+    "site_id": "SITE-0005",
+    "nurse_id": "NURSE-0001",
+    "arrival_mode": "walk-in",
+    "arrival_time": {
+      "$date": "2026-04-20T22:05:07.423Z"
+    },
+    "transport_origin": "home",
+    "pain_location": "multiple",
+    "mental_status_triage": "confused",
+    "chief_complaint_raw": "severe headache",
+    "chief_complaint_system": null,
+    "heart_rate": 77.0,
+    "respiratory_rate": 25.0,
+    "temperature_c": 38.0,
+    "spo2": 89.0,
+    "systolic_bp": 140.0,
+    "diastolic_bp": 100.0,
+    "gcs_total": 3,
+    "pain_score": 8,
+    "mean_arterial_pressure": 113.333,
+    "pulse_pressure": 40.0,
+    "shock_index": 0.55,
+    "news2_score": 9.0,
+    "triage_acuity": 1,
+    "urgency_label": "Resuscitation",
+    "engine": "ml_pipeline",
+    "data_source": "form",
+    "chatbot_session_id": null,
+    "chief_complaint_normalized": null,
+    "fields_missing": null,
+    "created_at": {
+      "$date": "2026-04-20T22:05:07.887Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T22:05:07.887Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69e6a31676fdbb5b1ba62ae4"
+    },
+    "visit_id": "VT-0003",
+    "patient_id": "TG-0012",
+    "site_id": "SITE-0005",
+    "nurse_id": "NURSE-0001",
+    "arrival_mode": "walk-in",
+    "arrival_time": {
+      "$date": "2026-04-20T22:05:10.098Z"
+    },
+    "transport_origin": "home",
+    "pain_location": "multiple",
+    "mental_status_triage": "confused",
+    "chief_complaint_raw": "severe headache",
+    "chief_complaint_system": null,
+    "heart_rate": 77.0,
+    "respiratory_rate": 25.0,
+    "temperature_c": 38.0,
+    "spo2": 89.0,
+    "systolic_bp": 140.0,
+    "diastolic_bp": 100.0,
+    "gcs_total": 3,
+    "pain_score": 8,
+    "mean_arterial_pressure": 113.333,
+    "pulse_pressure": 40.0,
+    "shock_index": 0.55,
+    "news2_score": 9.0,
+    "triage_acuity": 1,
+    "urgency_label": "Resuscitation",
+    "engine": "ml_pipeline",
+    "data_source": "form",
+    "chatbot_session_id": null,
+    "chief_complaint_normalized": null,
+    "fields_missing": null,
+    "created_at": {
+      "$date": "2026-04-20T22:05:10.133Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T22:05:10.133Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69e6a31676fdbb5b1ba62ae6"
+    },
+    "visit_id": "VT-0004",
+    "patient_id": "TG-0013",
+    "site_id": "SITE-0005",
+    "nurse_id": "NURSE-0001",
+    "arrival_mode": "walk-in",
+    "arrival_time": {
+      "$date": "2026-04-20T22:05:10.223Z"
+    },
+    "transport_origin": "home",
+    "pain_location": "multiple",
+    "mental_status_triage": "confused",
+    "chief_complaint_raw": "severe headache",
+    "chief_complaint_system": null,
+    "heart_rate": 77.0,
+    "respiratory_rate": 25.0,
+    "temperature_c": 38.0,
+    "spo2": 89.0,
+    "systolic_bp": 140.0,
+    "diastolic_bp": 100.0,
+    "gcs_total": 3,
+    "pain_score": 8,
+    "mean_arterial_pressure": 113.333,
+    "pulse_pressure": 40.0,
+    "shock_index": 0.55,
+    "news2_score": 9.0,
+    "triage_acuity": 1,
+    "urgency_label": "Resuscitation",
+    "engine": "ml_pipeline",
+    "data_source": "form",
+    "chatbot_session_id": null,
+    "chief_complaint_normalized": null,
+    "fields_missing": null,
+    "created_at": {
+      "$date": "2026-04-20T22:05:10.242Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T22:05:10.242Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69e6a8e6cf1f3fe27d3d42b0"
+    },
+    "visit_id": "VT-0005",
+    "patient_id": "TG-0014",
+    "site_id": "SITE-0002",
+    "nurse_id": "NURSE-0001",
+    "arrival_mode": "ambulance",
+    "arrival_time": {
+      "$date": "2026-04-20T22:29:58.526Z"
+    },
+    "transport_origin": "public_space",
+    "pain_location": "chest",
+    "mental_status_triage": "alert",
+    "chief_complaint_raw": "servre chest pain",
+    "chief_complaint_system": null,
+    "heart_rate": 77.0,
+    "respiratory_rate": 12.0,
+    "temperature_c": 36.0,
+    "spo2": 66.0,
+    "systolic_bp": 60.0,
+    "diastolic_bp": 99.0,
+    "gcs_total": 4,
+    "pain_score": 9,
+    "mean_arterial_pressure": 86.0,
+    "pulse_pressure": -39.0,
+    "shock_index": 1.283,
+    "news2_score": 10.0,
+    "triage_acuity": 1,
+    "urgency_label": "Resuscitation",
+    "engine": "ml_pipeline",
+    "target_specialty": "Emergency",
+    "assigned_doctor_id": "DOC-0001",
+    "assignment_status": "assigned",
+    "attended_by_doctor": true,
+    "attended_at": {
+      "$date": "2026-04-20T22:30:41.586Z"
+    },
+    "attended_by_doctor_id": "DOC-0001",
+    "data_source": "form",
+    "chatbot_session_id": null,
+    "chief_complaint_normalized": null,
+    "fields_missing": null,
+    "created_at": {
+      "$date": "2026-04-20T22:29:58.892Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T22:30:41.586Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69e6a99ecf1f3fe27d3d42b2"
+    },
+    "visit_id": "VT-0006",
+    "patient_id": "TG-0015",
+    "site_id": "SITE-0001",
+    "nurse_id": "self",
+    "arrival_mode": "brought_by_family",
+    "arrival_time": {
+      "$date": "2026-04-20T22:33:02.637Z"
+    },
+    "transport_origin": "home",
+    "pain_location": "head",
+    "mental_status_triage": "alert",
+    "chief_complaint_raw": "severe headache",
+    "chief_complaint_system": null,
+    "heart_rate": 90.0,
+    "respiratory_rate": 23.0,
+    "temperature_c": 37.0,
+    "spo2": 89.0,
+    "systolic_bp": 89.0,
+    "diastolic_bp": 140.0,
+    "gcs_total": 3,
+    "pain_score": 6,
+    "mean_arterial_pressure": 123.0,
+    "pulse_pressure": -51.0,
+    "shock_index": 1.011,
+    "news2_score": 11.0,
+    "triage_acuity": 1,
+    "urgency_label": "Resuscitation",
+    "engine": "ml_pipeline",
+    "target_specialty": "Emergency",
+    "assigned_doctor_id": "DOC-0001",
+    "assignment_status": "assigned",
+    "attended_by_doctor": true,
+    "attended_at": {
+      "$date": "2026-04-20T22:33:43.302Z"
+    },
+    "attended_by_doctor_id": "DOC-0001",
+    "data_source": "form",
+    "chatbot_session_id": null,
+    "chief_complaint_normalized": null,
+    "fields_missing": null,
+    "created_at": {
+      "$date": "2026-04-20T22:33:02.771Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T22:33:43.302Z"
+    }
+  }
+]

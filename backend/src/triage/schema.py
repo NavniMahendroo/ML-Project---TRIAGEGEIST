@@ -125,3 +125,5 @@ class TriageResponse(BaseModel):
     urgency_label: str
     engine: str
     chief_complaint_system: str | None = None
+    target_specialty: str | None = None
+    assigned_doctor_id: str | None = None

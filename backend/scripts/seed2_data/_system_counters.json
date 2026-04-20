@@ -1,10 +1,18 @@
 [
   {
-    "_id": "patients",
-    "seq": 8
+    "_id": "chatbot_sessions",
+    "seq": 5
   },
   {
-    "_id": "chatbot_sessions",
-    "seq": 4
+    "_id": "doctor_assignment:Emergency",
+    "seq": 2
+  },
+  {
+    "_id": "patients",
+    "seq": 15
+  },
+  {
+    "_id": "visits",
+    "seq": 6
   }
 ]

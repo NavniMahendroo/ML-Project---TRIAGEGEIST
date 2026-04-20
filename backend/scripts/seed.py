@@ -57,14 +57,7 @@ def _backfill_nurse_passwords(nurses: list[dict]) -> int:
     updated = 0
     for nurse in nurses:
         result = collection.update_one(
-            {
-                "nurse_id": nurse["nurse_id"],
-                "$or": [
-                    {"password": {"$exists": False}},
-                    {"password": ""},
-                    {"password": None},
-                ],
-            },
+            {"nurse_id": nurse["nurse_id"]},
             {"$set": {"password": nurse["password"]}},
         )
         updated += result.modified_count
@@ -90,36 +83,34 @@ def _backfill_nurse_roles(nurses: list[dict]) -> int:
     return updated
 
 
-def _backfill_doctor_credentials(doctors: list[dict]) -> tuple[int, int]:
+def _backfill_doctor_credentials(doctors: list[dict]) -> tuple[int, int, int, int]:
     collection = get_collection("doctors")
     password_updates = 0
     role_updates = 0
+    specialty_updates = 0
+    on_duty_updates = 0
     for doctor in doctors:
         password_result = collection.update_one(
-            {
-                "doctor_id": doctor["doctor_id"],
-                "$or": [
-                    {"password": {"$exists": False}},
-                    {"password": ""},
-                    {"password": None},
-                ],
-            },
+            {"doctor_id": doctor["doctor_id"]},
             {"$set": {"password": doctor["password"]}},
         )
         role_result = collection.update_one(
-            {
-                "doctor_id": doctor["doctor_id"],
-                "$or": [
-                    {"role": {"$exists": False}},
-                    {"role": ""},
-                    {"role": None},
-                ],
-            },
+            {"doctor_id": doctor["doctor_id"]},
             {"$set": {"role": doctor["role"]}},
+        )
+        specialty_result = collection.update_one(
+            {"doctor_id": doctor["doctor_id"]},
+            {"$set": {"specialty": doctor["specialty"]}},
+        )
+        on_duty_result = collection.update_one(
+            {"doctor_id": doctor["doctor_id"]},
+            {"$set": {"on_duty": doctor["on_duty"]}},
         )
         password_updates += password_result.modified_count
         role_updates += role_result.modified_count
-    return password_updates, role_updates
+        specialty_updates += specialty_result.modified_count
+        on_duty_updates += on_duty_result.modified_count
+    return password_updates, role_updates, specialty_updates, on_duty_updates
 
 
 def main():
@@ -138,19 +129,33 @@ def main():
         NurseDocument(
             nurse_id=f"NURSE-{index:04d}",
             name=f"Nurse {index:02d}",
-            password=hash_password(f"NURSE-{index:04d}"),
+            password=hash_password("12345678"),
             role="staff",
         ).model_dump()
         for index in range(1, 11)
     ]
+    doctor_specs = [
+        ("DOC-0001", "Dr. Meera Nair", "Emergency", True),
+        ("DOC-0002", "Dr. Karan Patel", "Cardiology", True),
+        ("DOC-0003", "Dr. Hafsa Noor", "Neurology", True),
+        ("DOC-0004", "Dr. Rohan Bedi", "Orthopedics", True),
+        ("DOC-0005", "Dr. Elena D'Souza", "Pediatrics", True),
+        ("DOC-0006", "Dr. Arjun Malhotra", "Pulmonology", True),
+        ("DOC-0007", "Dr. Sana Qureshi", "Gastroenterology", False),
+        ("DOC-0008", "Dr. Vikram Rao", "Nephrology", True),
+        ("DOC-0009", "Dr. Leah Fernandes", "Obstetrics & Gynecology", True),
+        ("DOC-0010", "Dr. Omar Siddiqui", "Emergency", False),
+    ]
     doctors = [
         DoctorDocument(
-            doctor_id=f"DOC-{index:04d}",
-            name=f"Doctor {index:02d}",
-            password=hash_password(f"DOC-{index:04d}"),
+            doctor_id=doctor_id,
+            name=name,
+            password=hash_password("12345678"),
+            specialty=specialty,
+            on_duty=on_duty,
             role="admin",
         ).model_dump()
-        for index in range(1, 6)
+        for doctor_id, name, specialty, on_duty in doctor_specs
     ]
     patients = [
         PatientDocument(
@@ -335,7 +340,7 @@ def main():
     doctor_count = _seed_documents("doctors", "doctor_id", doctors)
     nurse_password_backfill_count = _backfill_nurse_passwords(nurses)
     nurse_role_backfill_count = _backfill_nurse_roles(nurses)
-    doctor_password_backfill_count, doctor_role_backfill_count = _backfill_doctor_credentials(doctors)
+    doctor_password_backfill_count, doctor_role_backfill_count, doctor_specialty_backfill_count, doctor_on_duty_backfill_count = _backfill_doctor_credentials(doctors)
     patient_count = _seed_documents("patients", "patient_id", patients)
     history_count = _seed_documents("patient_history", "patient_id", patient_history)
     _sync_counter("patients", patients, "patient_id", "TG")
@@ -345,6 +350,7 @@ def main():
         f"Inserted {site_count} site(s), {nurse_count} nurse(s), {doctor_count} doctor(s), "
         f"backfilled {nurse_password_backfill_count} nurse password(s), {nurse_role_backfill_count} nurse role(s), "
         f"{doctor_password_backfill_count} doctor password(s), {doctor_role_backfill_count} doctor role(s), "
+        f"{doctor_specialty_backfill_count} doctor specialty field(s), {doctor_on_duty_backfill_count} doctor on-duty field(s), "
         f"{patient_count} patient(s), and {history_count} patient history record(s)."
     )
 

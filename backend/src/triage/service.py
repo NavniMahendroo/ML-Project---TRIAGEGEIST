@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import HTTPException
 
 from database import get_collection
+from src.doctors.service import assign_doctor_for_specialty, determine_target_specialty
 from src.visits.schema import VisitDocument
 from src.patients.service import (
     create_patient_record,
@@ -103,7 +104,25 @@ def _predict_triage(pre_pca_payload: dict) -> dict:
     }
 
 
-def _create_visit_document(patient_document: dict, visit_payload: dict, prediction: dict) -> dict:
+def _resolve_doctor_assignment(visit_payload: dict, prediction: dict) -> dict:
+    target_specialty = determine_target_specialty(
+        chief_complaint_system=visit_payload.get("chief_complaint_system"),
+        triage_acuity=prediction["triage_acuity"],
+    )
+    assigned_doctor_id, assignment_status = assign_doctor_for_specialty(target_specialty)
+    return {
+        "target_specialty": target_specialty,
+        "assigned_doctor_id": assigned_doctor_id,
+        "assignment_status": assignment_status,
+    }
+
+
+def _create_visit_document(
+    patient_document: dict,
+    visit_payload: dict,
+    prediction: dict,
+    routing: dict,
+) -> dict:
     visit_id = get_next_id("visits", "VT")
     document = VisitDocument(
         visit_id=visit_id,
@@ -132,6 +151,12 @@ def _create_visit_document(patient_document: dict, visit_payload: dict, predicti
         triage_acuity=prediction["triage_acuity"],
         urgency_label=prediction["urgency_label"],
         engine=prediction["engine"],
+        target_specialty=routing["target_specialty"],
+        assigned_doctor_id=routing["assigned_doctor_id"],
+        assignment_status=routing["assignment_status"],
+        attended_by_doctor=False,
+        attended_at=None,
+        attended_by_doctor_id=None,
         data_source=visit_payload.get("data_source", "form"),
         chatbot_session_id=visit_payload.get("chatbot_session_id"),
         chief_complaint_normalized=visit_payload.get("chief_complaint_normalized"),
@@ -155,14 +180,16 @@ def submit_triage(submission: TriageSubmission) -> dict:
         history_document=history_document,
     )
     prediction = _predict_triage(pre_pca_payload)
-    visit_document = _create_visit_document(patient_document, visit_payload, prediction)
+    routing = _resolve_doctor_assignment(visit_payload, prediction)
+    visit_document = _create_visit_document(patient_document, visit_payload, prediction, routing)
     increment_patient_visit_counter(patient_document["patient_id"])
 
     log.info(
-        "Created visit %s for patient %s with %s-feature payload.",
+        "Created visit %s for patient %s with %s-feature payload and specialty %s.",
         visit_document["visit_id"],
         patient_document["patient_id"],
         len(MODEL_FEATURES),
+        visit_document.get("target_specialty"),
     )
 
     return {
@@ -172,4 +199,6 @@ def submit_triage(submission: TriageSubmission) -> dict:
         "urgency_label": prediction["urgency_label"],
         "engine": prediction["engine"],
         "chief_complaint_system": visit_document.get("chief_complaint_system"),
+        "target_specialty": visit_document.get("target_specialty"),
+        "assigned_doctor_id": visit_document.get("assigned_doctor_id"),
     }

@@ -78,5 +78,25 @@
     "updated_at": {
       "$date": "2026-04-20T20:55:05.149Z"
     }
+  },
+  {
+    "_id": {
+      "$oid": "69e6a6a076fdbb5b1ba62ae7"
+    },
+    "session_id": "CS-0005",
+    "vapi_session_id": null,
+    "patient_id": null,
+    "user_role": null,
+    "status": "active",
+    "conversation_raw": [],
+    "collected_fields": {},
+    "fields_missing": [],
+    "collection_confidence": null,
+    "created_at": {
+      "$date": "2026-04-20T22:20:16.969Z"
+    },
+    "updated_at": {
+      "$date": "2026-04-20T22:20:16.969Z"
+    }
   }
 ]
