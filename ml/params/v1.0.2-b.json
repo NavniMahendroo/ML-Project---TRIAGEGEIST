@@ -1,0 +1,23 @@
+{
+    "MODEL_VERSION": "v1.0.2-b",
+    "DESCRIPTION": "Chief Complaint System Classifier. Text-only model: BioBERT NLP → PCA(10) → CatBoost MultiClass (14 body-system classes). Separate PCA from v1.0.2 triage model.",
+
+    "BERT_MODEL_NAME": "dmis-lab/biobert-v1.1",
+    "BERT_MAX_LENGTH": 64,
+    "BERT_BATCH_SIZE": 64,
+    "PCA_COMPONENTS": 10,
+
+    "CATBOOST_PARAMS": {
+        "iterations": 10000,
+        "task_type": "GPU",
+        "learning_rate": 0.05,
+        "depth": 6,
+        "loss_function": "MultiClass",
+        "early_stopping_rounds": 50,
+        "verbose": 100,
+        "random_seed": 42
+    },
+
+    "CV_FOLDS": 5,
+    "RANDOM_SEED": 42
+}
