@@ -12,6 +12,11 @@ transformers
 tqdm
 shap
 fastapi
+pydantic
 uvicorn[standard]
 pymongo
 python-dotenv
+rapidfuzz
+langgraph
+ollama
+groq
