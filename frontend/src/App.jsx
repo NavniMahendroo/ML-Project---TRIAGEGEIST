@@ -3,18 +3,16 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import TriagePage from "./pages/TriagePage";
 import ChatbotPage from "./pages/ChatbotPage/index";
 import LandingPage from "./pages/LandingPage";
-import PrivacyPage from "./pages/PrivacyPage";
-import PatientHubPage from "./pages/PatientHubPage";
 import SignInPage from "./pages/SignInPage";
-import AdminPatientsPage from "./pages/AdminPatientsPage";
-import AdminStatsPage from "./pages/AdminStatsPage";
-import AdminDoctorsPage from "./pages/AdminDoctorsPage";
-import AdminOutcomesPage from "./pages/AdminOutcomesPage";
-import AdminSettingsPage from "./pages/AdminSettingsPage";
-import StaffDashboardPage from "./pages/StaffDashboardPage";
-import StaffTasksPage from "./pages/StaffTasksPage";
-import StaffSettingsPage from "./pages/StaffSettingsPage";
-import StaffLogoutPage from "./pages/StaffLogoutPage";
+import DoctorPatientsPage from "./pages/DoctorPage/DoctorPatientsPage";
+import DoctorStatsPage from "./pages/DoctorPage/DoctorStatsPage";
+import DoctorStaffPage from "./pages/DoctorPage/DoctorStaffPage";
+import DoctorOutcomesPage from "./pages/DoctorPage/DoctorOutcomesPage";
+import DoctorSettingsPage from "./pages/DoctorPage/DoctorSettingsPage";
+import StaffDashboardPage from "./pages/StaffPage/StaffDashboardPage";
+import StaffTasksPage from "./pages/StaffPage/StaffTasksPage";
+import StaffSettingsPage from "./pages/StaffPage/StaffSettingsPage";
+import StaffLogoutPage from "./pages/StaffPage/StaffLogoutPage";
 import PlatformLayout from "./components/PlatformLayout";
 
 function isStaffAuthenticated() {
@@ -58,18 +56,17 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/signin" element={<SignInPage />} />
-        <Route path="/patient" element={<PatientHubPage />} />
+        <Route path="/patient" element={<Navigate to="/patient/form" replace />} />
         <Route path="/patient/form" element={<PlatformLayout><TriagePage /></PlatformLayout>} />
         <Route path="/patient/chatbot" element={<ChatbotPage />} />
 
         <Route path="/admin" element={<AdminProtectedRoute><Navigate to="/admin/patients" replace /></AdminProtectedRoute>} />
-        <Route path="/admin/patients" element={<AdminProtectedRoute><AdminPatientsPage /></AdminProtectedRoute>} />
-        <Route path="/admin/stats" element={<AdminProtectedRoute><AdminStatsPage /></AdminProtectedRoute>} />
-        <Route path="/admin/doctors" element={<AdminProtectedRoute><AdminDoctorsPage /></AdminProtectedRoute>} />
-        <Route path="/admin/outcomes" element={<AdminProtectedRoute><AdminOutcomesPage /></AdminProtectedRoute>} />
-        <Route path="/admin/settings" element={<AdminProtectedRoute><AdminSettingsPage /></AdminProtectedRoute>} />
+        <Route path="/admin/patients" element={<AdminProtectedRoute><DoctorPatientsPage /></AdminProtectedRoute>} />
+        <Route path="/admin/stats" element={<AdminProtectedRoute><DoctorStatsPage /></AdminProtectedRoute>} />
+        <Route path="/admin/doctors" element={<AdminProtectedRoute><DoctorStaffPage /></AdminProtectedRoute>} />
+        <Route path="/admin/outcomes" element={<AdminProtectedRoute><DoctorOutcomesPage /></AdminProtectedRoute>} />
+        <Route path="/admin/settings" element={<AdminProtectedRoute><DoctorSettingsPage /></AdminProtectedRoute>} />
 
         <Route path="/staff" element={<StaffProtectedRoute><StaffDashboardPage /></StaffProtectedRoute>} />
         <Route path="/staff/tasks" element={<StaffProtectedRoute><StaffTasksPage /></StaffProtectedRoute>} />

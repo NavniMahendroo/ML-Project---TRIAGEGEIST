@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import RoleShell from "../components/RoleShell";
-import { api } from "../lib/api";
+import RoleShell from "../../components/RoleShell";
+import { api } from "../../lib/api";
 
 const adminLinks = [
   { to: "/admin/patients", label: "Assigned Patients" },
   { to: "/admin/stats", label: "Overall Graphs" },
-  { to: "/admin/doctors", label: "Doctor Management" },
+  { to: "/admin/doctors", label: "Staff Management" },
   { to: "/admin/outcomes", label: "Survived vs Admitted" },
   { to: "/admin/settings", label: "Settings" },
   { to: "/signin", label: "Logout" },
@@ -27,7 +27,7 @@ function formatTimestamp(value) {
   return date.toLocaleString();
 }
 
-export default function AdminPatientsPage() {
+export default function DoctorPatientsPage() {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -45,23 +45,23 @@ export default function AdminPatientsPage() {
     }
   }, []);
 
-  const doctorId = auth?.doctor_id || null;
-  const doctorName = auth?.name || "Doctor";
+  const adminId = auth?.doctor_id || null;
+  const adminName = auth?.name || "Admin";
   const [onDuty, setOnDuty] = useState(Boolean(auth?.on_duty ?? true));
 
   useEffect(() => {
     let isActive = true;
 
     async function loadAssignedPatients() {
-      if (!doctorId) {
+      if (!adminId) {
         setLoading(false);
-        setError("Doctor session not found.");
+        setError("Admin session not found.");
         return;
       }
 
       try {
         setLoading(true);
-        const response = await api.listDoctorPatients(doctorId);
+        const response = await api.listAdminPatients(adminId);
         if (!isActive) return;
         setPatients(response.items || []);
       } catch (err) {
@@ -79,19 +79,19 @@ export default function AdminPatientsPage() {
     return () => {
       isActive = false;
     };
-  }, [doctorId]);
+  }, [adminId]);
 
   const attendedCount = patients.filter((patient) => patient.attended_by_doctor).length;
   const unattendedCount = patients.length - attendedCount;
   const criticalCount = patients.filter((patient) => patient.triage_acuity <= 2).length;
 
   const markAttended = async (visitId) => {
-    if (!doctorId) return;
+    if (!adminId) return;
 
     try {
       setPendingVisitId(visitId);
       setActionError("");
-      const updated = await api.markDoctorPatientAttended(doctorId, visitId);
+      const updated = await api.markAdminPatientAttended(adminId, visitId);
       setPatients((prev) => prev.map((patient) => (
         patient.visit_id === visitId
           ? {
@@ -110,12 +110,12 @@ export default function AdminPatientsPage() {
   };
 
   const toggleDuty = async () => {
-    if (!doctorId) return;
+    if (!adminId) return;
 
     try {
       setDutyUpdating(true);
       setActionError("");
-      const updated = await api.updateDoctorDuty(doctorId, !onDuty);
+      const updated = await api.updateAdminDuty(adminId, !onDuty);
       setOnDuty(updated.on_duty);
       localStorage.setItem(
         "adminAuth",
@@ -153,18 +153,18 @@ export default function AdminPatientsPage() {
 
       <section className="rounded-2xl border border-cyan-100/20 bg-slate-950/45 p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-cyan-200">Doctor Queue</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-cyan-200">Admin Queue</p>
           <div className="flex flex-wrap items-center gap-2">
-            {doctorId ? <span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1 text-xs text-cyan-100">{doctorId}</span> : null}
+            {adminId ? <span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1 text-xs text-cyan-100">{adminId}</span> : null}
             <span className={`rounded-full border px-3 py-1 text-xs ${onDuty ? "border-emerald-300/30 bg-emerald-400/10 text-emerald-100" : "border-amber-300/30 bg-amber-400/10 text-amber-100"}`}>
               {onDuty ? "On Duty" : "Off Duty"}
             </span>
             <button
               type="button"
               onClick={toggleDuty}
-              disabled={dutyUpdating || !doctorId}
+              disabled={dutyUpdating || !adminId}
               className={`rounded-xl px-4 py-2 text-xs font-semibold transition ${onDuty ? "bg-amber-400/20 text-amber-100 hover:bg-amber-400/30" : "bg-emerald-400/20 text-emerald-100 hover:bg-emerald-400/30"} disabled:opacity-70`}
-              title={`${doctorName}: set ${onDuty ? "off duty" : "on duty"}`}
+              title={`${adminName}: set ${onDuty ? "off duty" : "on duty"}`}
             >
               {dutyUpdating ? "Updating..." : onDuty ? "Set Off Duty" : "Set On Duty"}
             </button>

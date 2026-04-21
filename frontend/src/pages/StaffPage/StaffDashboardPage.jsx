@@ -1,6 +1,6 @@
 import React from "react";
-import RoleShell from "../components/RoleShell";
-import { staffPatients, staffTasks } from "../constants/mockData";
+import RoleShell from "../../components/RoleShell";
+import { staffPatients, staffTasks } from "../../constants/mockData";
 
 const staffLinks = [
   { to: "/staff", label: "Dashboard" },

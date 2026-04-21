@@ -26,18 +26,18 @@ export const api = {
   nurseLogin: (nurseId, password) =>
     post("/nurses/login", { nurse_id: nurseId, password, role: "staff" }),
 
-  doctorLogin: (doctorId, password) =>
-    post("/doctors/login", { doctor_id: doctorId, password, role: "admin" }),
+  adminLogin: (adminId, password) =>
+    post("/doctors/login", { doctor_id: adminId, password, role: "admin" }),
 
   listDoctors: () => get("/doctors"),
 
-  listDoctorPatients: (doctorId) => get(`/doctors/${doctorId}/patients`),
+  listAdminPatients: (adminId) => get(`/doctors/${adminId}/patients`),
 
-  updateDoctorDuty: (doctorId, onDuty) =>
-    post(`/doctors/${doctorId}/duty`, { on_duty: onDuty }),
+  updateAdminDuty: (adminId, onDuty) =>
+    post(`/doctors/${adminId}/duty`, { on_duty: onDuty }),
 
-  markDoctorPatientAttended: (doctorId, visitId) =>
-    post(`/doctors/${doctorId}/patients/${visitId}/attend`, {}),
+  markAdminPatientAttended: (adminId, visitId) =>
+    post(`/doctors/${adminId}/patients/${visitId}/attend`, {}),
 
   startSession: (vapiSessionId = null) =>
     post("/chatbot/session/start", { vapi_session_id: vapiSessionId }),

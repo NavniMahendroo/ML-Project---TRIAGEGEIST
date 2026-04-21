@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import RoleShell from "../components/RoleShell";
+import RoleShell from "../../components/RoleShell";
 
 const staffLinks = [
   { to: "/staff", label: "Dashboard" },

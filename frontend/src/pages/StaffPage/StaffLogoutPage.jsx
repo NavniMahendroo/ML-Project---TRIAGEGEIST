@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
-import PlatformLayout from "../components/PlatformLayout";
+import PlatformLayout from "../../components/PlatformLayout";
 
 export default function StaffLogoutPage() {
   useEffect(() => {

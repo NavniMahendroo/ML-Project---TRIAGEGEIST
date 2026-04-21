@@ -17,8 +17,6 @@ PRIMARY_KEYS = {
     "sites": "site_id",
     "nurses": "nurse_id",
     "doctors": "doctor_id",
-    "chatbot_sessions": "session_id",
-    "users": "username",
     "_system_counters": "_id",
 }
 

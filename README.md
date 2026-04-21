@@ -25,7 +25,7 @@ The system combines a **CatBoost** gradient-boosted model with **BioBERT** text 
 | **ML Pipeline** | CatBoost classifier with BioBERT (PubMedBERT) text embeddings and PCA dimensionality reduction |
 | **Triage Form** | Structured patient intake form with real-time ML-powered acuity prediction |
 | **AI Chatbot** | Conversational triage assistant powered by Llama 3.2 (Ollama / Groq fallback) with automatic clinical field extraction |
-| **Admin Dashboard** | Patient management, department statistics, doctor oversight, and outcome tracking |
+| **Doctor Portal** | Assigned patient queue, acuity tracking, on-duty toggle, and specialty-based routing |
 | **Staff Portal** | Role-based nurse dashboard with task management and authenticated workflows |
 | **Explainability** | SHAP-based model interpretability reports generated during training |
 
@@ -58,7 +58,7 @@ The system combines a **CatBoost** gradient-boosted model with **BioBERT** text 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        Frontend (React + Vite)              │
-│  Landing · Triage Form · Chatbot · Staff · Admin Dashboards │
+│  Landing · Triage Form · Chatbot · Doctor Portal · Staff Portal │
 └────────────────────────────┬────────────────────────────────┘
                              │  REST API
 ┌────────────────────────────▼────────────────────────────────┐
@@ -140,7 +140,32 @@ Edit `backend/.env` and configure:
 | `HF_TOKEN` | Hugging Face API token (create a free "Read" token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)) |
 | `GROQ_API_KEY` | *(Optional)* Groq API key for cloud LLM fallback |
 
-### 5. Place Large Files
+### 5. Seed the Database
+
+Load the seed snapshot into MongoDB:
+
+```bash
+cd backend
+python scripts/seed2.py
+```
+
+This populates the following collections from JSON snapshots in `backend/scripts/seed2_data/`:
+
+| File | Collection | Contents |
+|---|---|---|
+| `patients.json` | `patients` | 15 patients (TG-0001 → TG-0015) |
+| `visits.json` | `visits` | 6 visits (VT-0001 → VT-0006) |
+| `patient_history.json` | `patient_history` | Medical history for 3 patients |
+| `doctors.json` | `doctors` | 10 doctors (DOC-0001 → DOC-0010) across specialties |
+| `nurses.json` | `nurses` | 10 nurses (NURSE-0001 → NURSE-0010) |
+| `sites.json` | `sites` | 5 hospital sites (SITE-0001 → SITE-0005) |
+| `_system_counters.json` | `_system_counters` | Auto-increment counters for ID generation |
+
+**Default password for all seeded users: `12345678`**
+
+> **`_system_counters` explained:** The backend generates IDs like `TG-0016`, `VT-0007`, `CS-0001` using an atomic counter in MongoDB. The seed file sets these counters to match the highest existing ID in each collection so new records never collide. Counters seeded: `patients` (15), `visits` (6), `chatbot_sessions` (0), `doctor_assignment:Emergency` (2).
+
+### 6. Place Large Files
 
 Due to GitHub's file size limits, large datasets and trained model binaries are **not** included in this repository. Obtain them from the team's shared drive and place them as follows:
 
@@ -170,7 +195,16 @@ cd frontend && npm run dev
 - **Backend API** → `http://127.0.0.1:8000`
 - **Frontend UI** → `http://127.0.0.1:5173`
 
-The backend will automatically connect to MongoDB, run index migrations, and load the ML model into memory on startup.
+The backend automatically connects to MongoDB, runs index migrations, and loads the ML model into memory on startup.
+
+**Access the platform:**
+
+| Role | URL | Login |
+|---|---|---|
+| Patient (Triage Form) | `/patient/form` | No login required |
+| Patient (Chatbot) | `/patient/chatbot` | No login required |
+| Staff (Nurse) | `/signin` → Staff role | `NURSE-0001` / `12345678` |
+| Doctor (Admin) | `/signin` → Admin role | `DOC-0001` / `12345678` |
 
 ### 📊 Option B — Generate a Kaggle Submission
 
@@ -208,14 +242,20 @@ ML-Project---TRIAGEGEIST/
 │   ├── server.py               # Application entry point & router registration
 │   ├── database.py             # MongoDB connection & index management
 │   ├── src/
-│   │   ├── triage/             # ML inference service & endpoints
+│   │   ├── triage/             # ML inference, doctor routing & visit creation
 │   │   ├── patients/           # Patient CRUD operations
 │   │   ├── chatbot/            # LLM-powered conversational triage
-│   │   ├── nurses/             # Staff management & authentication
-│   │   ├── doctors/            # Admin / doctor management
+│   │   ├── nurses/             # Staff authentication & management
+│   │   ├── doctors/            # Doctor authentication, queue & duty management
 │   │   ├── visits/             # Visit tracking
 │   │   ├── patient_history/    # Patient history records
 │   │   └── sites/              # Site / department configuration
+│   ├── constants/
+│   │   └── routing.py          # Specialty-to-keyword mapping for doctor routing
+│   ├── scripts/
+│   │   ├── seed2.py            # Restore DB from JSON snapshots (recommended)
+│   │   ├── seed.py             # Generate fresh test data programmatically
+│   │   └── seed2_data/         # JSON seed snapshots (patients, visits, doctors…)
 │   └── .env.example            # Environment variable template
 │
 ├── frontend/                   # React + Vite frontend
@@ -224,12 +264,20 @@ ML-Project---TRIAGEGEIST/
 │   │   ├── pages/
 │   │   │   ├── LandingPage.jsx         # Public landing page
 │   │   │   ├── TriagePage.jsx          # Structured triage intake form
+│   │   │   ├── SignInPage.jsx          # Staff / doctor authentication
 │   │   │   ├── ChatbotPage/            # AI chatbot interface
-│   │   │   ├── SignInPage.jsx          # Staff / admin authentication
-│   │   │   ├── AdminPatientsPage.jsx   # Admin patient management
-│   │   │   ├── AdminStatsPage.jsx      # Department statistics
-│   │   │   ├── StaffDashboardPage.jsx  # Nurse dashboard
-│   │   │   └── ...                     # Additional pages
+│   │   │   ├── DoctorPage/             # Doctor portal (auth-protected)
+│   │   │   │   ├── DoctorPatientsPage.jsx   # Assigned patient queue
+│   │   │   │   ├── DoctorStaffPage.jsx      # Staff roster & on-duty status
+│   │   │   │   ├── DoctorStatsPage.jsx      # Department statistics
+│   │   │   │   ├── DoctorOutcomesPage.jsx   # Outcome tracking
+│   │   │   │   ├── DoctorSettingsPage.jsx   # Doctor settings
+│   │   │   │   └── DoctorDashboardPage.jsx  # Dashboard (unused route)
+│   │   │   └── StaffPage/              # Staff portal (auth-protected)
+│   │   │       ├── StaffDashboardPage.jsx   # Nurse shift dashboard
+│   │   │       ├── StaffTasksPage.jsx       # Task management
+│   │   │       ├── StaffSettingsPage.jsx    # Staff settings
+│   │   │       └── StaffLogoutPage.jsx      # Logout handler
 │   │   └── components/         # Reusable UI components
 │   └── package.json
 │

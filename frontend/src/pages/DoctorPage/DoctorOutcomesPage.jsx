@@ -1,10 +1,10 @@
 import React from "react";
-import RoleShell from "../components/RoleShell";
+import RoleShell from "../../components/RoleShell";
 
 const adminLinks = [
   { to: "/admin/patients", label: "Patients by Department" },
   { to: "/admin/stats", label: "Overall Graphs" },
-  { to: "/admin/doctors", label: "Doctor Management" },
+  { to: "/admin/doctors", label: "Staff Management" },
   { to: "/admin/outcomes", label: "Survived vs Admitted" },
   { to: "/admin/settings", label: "Settings" },
   { to: "/signin", label: "Logout" },
@@ -19,7 +19,7 @@ function StatCard({ label, value, tone }) {
   );
 }
 
-export default function AdminOutcomesPage() {
+export default function DoctorOutcomesPage() {
   return (
     <RoleShell
       role="Admin Console"

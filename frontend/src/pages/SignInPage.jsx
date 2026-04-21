@@ -38,7 +38,7 @@ export default function SignInPage() {
         );
         localStorage.removeItem("adminAuth");
       } else {
-        const auth = await api.doctorLogin(form.username.trim(), form.password);
+        const auth = await api.adminLogin(form.username.trim(), form.password);
         localStorage.setItem(
           "adminAuth",
           JSON.stringify({
@@ -106,7 +106,7 @@ export default function SignInPage() {
           {form.role === "staff" ? (
             <p className="text-xs text-slate-300/80">Use your Nurse ID and password. Default seeded password is your Nurse ID.</p>
           ) : (
-            <p className="text-xs text-slate-300/80">Use your Doctor ID and password. Default seeded password is your Doctor ID.</p>
+            <p className="text-xs text-slate-300/80">Use your Admin ID and password. Default seeded password is your Admin ID.</p>
           )}
         </form>
       </section>

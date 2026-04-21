@@ -1,17 +1,17 @@
 import React, { useMemo } from "react";
-import RoleShell from "../components/RoleShell";
-import { departmentStats } from "../constants/mockData";
+import RoleShell from "../../components/RoleShell";
+import { departmentStats } from "../../constants/mockData";
 
 const adminLinks = [
   { to: "/admin/patients", label: "Patients by Department" },
   { to: "/admin/stats", label: "Overall Graphs" },
-  { to: "/admin/doctors", label: "Doctor Management" },
+  { to: "/admin/doctors", label: "Staff Management" },
   { to: "/admin/outcomes", label: "Survived vs Admitted" },
   { to: "/admin/settings", label: "Settings" },
   { to: "/signin", label: "Logout" },
 ];
 
-export default function AdminStatsPage() {
+export default function DoctorStatsPage() {
   const totalPatients = useMemo(() => departmentStats.reduce((sum, item) => sum + item.patients, 0), []);
 
   const pieGradient = useMemo(() => {

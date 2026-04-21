@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
-import PlatformLayout from "../components/PlatformLayout";
-import { adminPatientsByDepartment, departmentStats, doctors } from "../constants/mockData";
+import PlatformLayout from "../../components/PlatformLayout";
+import { adminPatientsByDepartment, departmentStats, doctors } from "../../constants/mockData";
 
 function StatTile({ label, value }) {
   return (
@@ -11,7 +11,7 @@ function StatTile({ label, value }) {
   );
 }
 
-export default function AdminDashboardPage() {
+export default function DoctorDashboardPage() {
   const [activeTab, setActiveTab] = useState("patients");
   const [selectedDepartment, setSelectedDepartment] = useState("Emergency");
 
@@ -58,7 +58,7 @@ export default function AdminDashboardPage() {
             Overall Stats
           </button>
           <button onClick={() => setActiveTab("doctors")} className={`rounded-xl px-4 py-2 text-sm ${activeTab === "doctors" ? "bg-cyan-300/20 text-cyan-100 ring-1 ring-cyan-200/30" : "bg-white/5 text-slate-200"}`}>
-            Doctor Management
+            Staff Management
           </button>
         </div>
 
@@ -127,7 +127,7 @@ export default function AdminDashboardPage() {
 
         {activeTab === "doctors" && (
           <section className="mt-6 rounded-2xl border border-cyan-100/20 bg-slate-950/45 p-5">
-            <p className="text-xs uppercase tracking-[0.2em] text-cyan-200">Doctor Management</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-cyan-200">Staff Management</p>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {doctors.map((doctor) => (
                 <article key={doctor.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
