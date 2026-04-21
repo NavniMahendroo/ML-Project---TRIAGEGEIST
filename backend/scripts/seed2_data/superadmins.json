@@ -1,0 +1,20 @@
+[
+  {
+    "admin_id": "SA-0001",
+    "name": "Super Admin",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "superadmin"
+  },
+  {
+    "admin_id": "SA-0002",
+    "name": "Operations Lead",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "superadmin"
+  },
+  {
+    "admin_id": "SA-0003",
+    "name": "Clinical Director",
+    "password": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f",
+    "role": "superadmin"
+  }
+]

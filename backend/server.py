@@ -12,6 +12,7 @@ from src.patients.router import router as patients_router
 from src.chatbot.router import router as chatbot_router
 from src.nurses.router import router as nurses_router
 from src.doctors.router import router as doctors_router
+from src.superadmin.router import router as superadmin_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger(__name__)
@@ -37,6 +38,7 @@ app.include_router(patients_router)
 app.include_router(chatbot_router)
 app.include_router(nurses_router)
 app.include_router(doctors_router)
+app.include_router(superadmin_router)
 
 @app.on_event("startup")
 def startup_event():

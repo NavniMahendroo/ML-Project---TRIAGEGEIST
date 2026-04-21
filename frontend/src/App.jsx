@@ -13,6 +13,7 @@ import StaffDashboardPage from "./pages/StaffPage/StaffDashboardPage";
 import StaffTasksPage from "./pages/StaffPage/StaffTasksPage";
 import StaffSettingsPage from "./pages/StaffPage/StaffSettingsPage";
 import StaffLogoutPage from "./pages/StaffPage/StaffLogoutPage";
+import SuperadminDashboardPage from "./pages/SuperadminDashboardPage";
 import PlatformLayout from "./components/PlatformLayout";
 
 function isStaffAuthenticated() {
@@ -37,6 +38,17 @@ function isAdminAuthenticated() {
   }
 }
 
+function isSuperadminAuthenticated() {
+  try {
+    const raw = localStorage.getItem("superadminAuth");
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    return Boolean(parsed?.admin_id);
+  } catch {
+    return false;
+  }
+}
+
 function StaffProtectedRoute({ children }) {
   if (!isStaffAuthenticated()) {
     return <Navigate to="/signin" replace />;
@@ -46,6 +58,13 @@ function StaffProtectedRoute({ children }) {
 
 function AdminProtectedRoute({ children }) {
   if (!isAdminAuthenticated()) {
+    return <Navigate to="/signin" replace />;
+  }
+  return children;
+}
+
+function SuperadminProtectedRoute({ children }) {
+  if (!isSuperadminAuthenticated()) {
     return <Navigate to="/signin" replace />;
   }
   return children;
@@ -72,6 +91,8 @@ function App() {
         <Route path="/staff/tasks" element={<StaffProtectedRoute><StaffTasksPage /></StaffProtectedRoute>} />
         <Route path="/staff/settings" element={<StaffProtectedRoute><StaffSettingsPage /></StaffProtectedRoute>} />
         <Route path="/staff/logout" element={<StaffProtectedRoute><StaffLogoutPage /></StaffProtectedRoute>} />
+
+        <Route path="/superadmin" element={<SuperadminProtectedRoute><SuperadminDashboardPage /></SuperadminProtectedRoute>} />
 
         <Route path="/triage" element={<Navigate to="/patient/form" replace />} />
         <Route path="/chatbot" element={<Navigate to="/patient/chatbot" replace />} />

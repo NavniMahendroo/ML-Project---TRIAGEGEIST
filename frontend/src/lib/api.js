@@ -29,6 +29,9 @@ export const api = {
   adminLogin: (adminId, password) =>
     post("/doctors/login", { doctor_id: adminId, password, role: "admin" }),
 
+  superadminLogin: (adminId, password) =>
+    post("/superadmin/login", { admin_id: adminId, password }),
+
   listDoctors: () => get("/doctors"),
 
   listAdminPatients: (adminId) => get(`/doctors/${adminId}/patients`),
@@ -38,6 +41,14 @@ export const api = {
 
   markAdminPatientAttended: (adminId, visitId) =>
     post(`/doctors/${adminId}/patients/${visitId}/attend`, {}),
+
+  getSuperadminSummary: () => get("/superadmin/dashboard/summary"),
+
+  listSuperadminAssignments: (limit = 100) =>
+    get(`/superadmin/dashboard/assignments?limit=${limit}`),
+
+  markSuperadminAssignmentAttended: (visitId) =>
+    post(`/superadmin/dashboard/assignments/${visitId}/attend`, {}),
 
   startSession: (vapiSessionId = null) =>
     post("/chatbot/session/start", { vapi_session_id: vapiSessionId }),

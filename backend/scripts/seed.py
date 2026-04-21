@@ -13,6 +13,7 @@ from src.patient_history.schema import PatientHistoryDocument  # noqa: E402
 from src.nurses.schema import NurseDocument  # noqa: E402
 from src.patients.schema import PatientDocument  # noqa: E402
 from src.sites.schema import SiteDocument  # noqa: E402
+from src.superadmin.schema import SuperAdminDocument  # noqa: E402
 from utils.clinical_utils import calculate_age_group, calculate_bmi  # noqa: E402
 from utils.security import hash_password  # noqa: E402
 
@@ -83,6 +84,18 @@ def _backfill_nurse_roles(nurses: list[dict]) -> int:
     return updated
 
 
+def _backfill_nurse_on_duty(nurses: list[dict]) -> int:
+    collection = get_collection("nurses")
+    updated = 0
+    for nurse in nurses:
+        result = collection.update_one(
+            {"nurse_id": nurse["nurse_id"]},
+            {"$set": {"on_duty": nurse["on_duty"]}},
+        )
+        updated += result.modified_count
+    return updated
+
+
 def _backfill_doctor_credentials(doctors: list[dict]) -> tuple[int, int, int, int]:
     collection = get_collection("doctors")
     password_updates = 0
@@ -113,6 +126,18 @@ def _backfill_doctor_credentials(doctors: list[dict]) -> tuple[int, int, int, in
     return password_updates, role_updates, specialty_updates, on_duty_updates
 
 
+def _backfill_superadmin_passwords(superadmins: list[dict]) -> int:
+    collection = get_collection("superadmins")
+    updated = 0
+    for admin in superadmins:
+        result = collection.update_one(
+            {"admin_id": admin["admin_id"]},
+            {"$set": {"password": admin["password"]}},
+        )
+        updated += result.modified_count
+    return updated
+
+
 def main():
     initialize_database()
     ensure_indexes()
@@ -130,6 +155,7 @@ def main():
             nurse_id=f"NURSE-{index:04d}",
             name=f"Nurse {index:02d}",
             password=hash_password("12345678"),
+            on_duty=True,
             role="staff",
         ).model_dump()
         for index in range(1, 11)
@@ -156,6 +182,26 @@ def main():
             role="admin",
         ).model_dump()
         for doctor_id, name, specialty, on_duty in doctor_specs
+    ]
+    superadmins = [
+        SuperAdminDocument(
+            admin_id="SA-0001",
+            name="Super Admin",
+            password=hash_password("12345678"),
+            role="superadmin",
+        ).model_dump(),
+        SuperAdminDocument(
+            admin_id="SA-0002",
+            name="Operations Lead",
+            password=hash_password("12345678"),
+            role="superadmin",
+        ).model_dump(),
+        SuperAdminDocument(
+            admin_id="SA-0003",
+            name="Clinical Director",
+            password=hash_password("12345678"),
+            role="superadmin",
+        ).model_dump(),
     ]
     patients = [
         PatientDocument(
@@ -338,19 +384,23 @@ def main():
     site_count = _seed_documents("sites", "site_id", sites)
     nurse_count = _seed_documents("nurses", "nurse_id", nurses)
     doctor_count = _seed_documents("doctors", "doctor_id", doctors)
+    superadmin_count = _seed_documents("superadmins", "admin_id", superadmins)
     nurse_password_backfill_count = _backfill_nurse_passwords(nurses)
     nurse_role_backfill_count = _backfill_nurse_roles(nurses)
+    nurse_on_duty_backfill_count = _backfill_nurse_on_duty(nurses)
     doctor_password_backfill_count, doctor_role_backfill_count, doctor_specialty_backfill_count, doctor_on_duty_backfill_count = _backfill_doctor_credentials(doctors)
+    superadmin_password_backfill_count = _backfill_superadmin_passwords(superadmins)
     patient_count = _seed_documents("patients", "patient_id", patients)
     history_count = _seed_documents("patient_history", "patient_id", patient_history)
     _sync_counter("patients", patients, "patient_id", "TG")
 
     print(
         "Seed complete. "
-        f"Inserted {site_count} site(s), {nurse_count} nurse(s), {doctor_count} doctor(s), "
-        f"backfilled {nurse_password_backfill_count} nurse password(s), {nurse_role_backfill_count} nurse role(s), "
+        f"Inserted {site_count} site(s), {nurse_count} nurse(s), {doctor_count} doctor(s), {superadmin_count} superadmin(s), "
+        f"backfilled {nurse_password_backfill_count} nurse password(s), {nurse_role_backfill_count} nurse role(s), {nurse_on_duty_backfill_count} nurse on-duty field(s), "
         f"{doctor_password_backfill_count} doctor password(s), {doctor_role_backfill_count} doctor role(s), "
         f"{doctor_specialty_backfill_count} doctor specialty field(s), {doctor_on_duty_backfill_count} doctor on-duty field(s), "
+        f"{superadmin_password_backfill_count} superadmin password(s), "
         f"{patient_count} patient(s), and {history_count} patient history record(s)."
     )
 

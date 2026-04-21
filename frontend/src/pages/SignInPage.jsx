@@ -6,6 +6,7 @@ import { api } from "../lib/api";
 const roleRoutes = {
   staff: "/staff",
   admin: "/admin/patients",
+  superadmin: "/superadmin",
 };
 
 export default function SignInPage() {
@@ -37,7 +38,8 @@ export default function SignInPage() {
           }),
         );
         localStorage.removeItem("adminAuth");
-      } else {
+        localStorage.removeItem("superadminAuth");
+      } else if (form.role === "admin") {
         const auth = await api.adminLogin(form.username.trim(), form.password);
         localStorage.setItem(
           "adminAuth",
@@ -49,6 +51,20 @@ export default function SignInPage() {
           }),
         );
         localStorage.removeItem("staffAuth");
+        localStorage.removeItem("superadminAuth");
+      } else {
+        const auth = await api.superadminLogin(form.username.trim(), form.password);
+        localStorage.setItem(
+          "superadminAuth",
+          JSON.stringify({
+            admin_id: auth.admin_id,
+            name: auth.name,
+            role: auth.role,
+            logged_in_at: new Date().toISOString(),
+          }),
+        );
+        localStorage.removeItem("staffAuth");
+        localStorage.removeItem("adminAuth");
       }
       navigate(roleRoutes[form.role] || "/");
     } catch (submitError) {
@@ -73,7 +89,13 @@ export default function SignInPage() {
               name="username"
               value={form.username}
               onChange={onChange}
-              placeholder={form.role === "staff" ? "NURSE-0001" : "DOC-0001"}
+              placeholder={
+                form.role === "staff"
+                  ? "NURSE-0001"
+                  : form.role === "admin"
+                    ? "DOC-0001"
+                    : "SA-0001"
+              }
               required
             />
           </label>
@@ -96,6 +118,7 @@ export default function SignInPage() {
             <select className="field-input" name="role" value={form.role} onChange={onChange}>
               <option value="staff">Staff</option>
               <option value="admin">Admin</option>
+              <option value="superadmin">Superadmin</option>
             </select>
           </label>
 
@@ -105,8 +128,10 @@ export default function SignInPage() {
           {error ? <p className="text-sm text-rose-300">{error}</p> : null}
           {form.role === "staff" ? (
             <p className="text-xs text-slate-300/80">Use your Nurse ID and password. Default seeded password is your Nurse ID.</p>
-          ) : (
+          ) : form.role === "admin" ? (
             <p className="text-xs text-slate-300/80">Use your Admin ID and password. Default seeded password is your Admin ID.</p>
+          ) : (
+            <p className="text-xs text-slate-300/80">Use your Superadmin ID and password. Default seeded password is 12345678.</p>
           )}
         </form>
       </section>
