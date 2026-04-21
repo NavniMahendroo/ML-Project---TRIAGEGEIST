@@ -50,6 +50,9 @@ export const api = {
   markSuperadminAssignmentAttended: (visitId) =>
     post(`/superadmin/dashboard/assignments/${visitId}/attend`, {}),
 
+  reassignSuperadminAssignment: (visitId, doctorId) =>
+    post(`/superadmin/dashboard/assignments/${visitId}/reassign`, { doctor_id: doctorId }),
+
   startSession: (vapiSessionId = null) =>
     post("/chatbot/session/start", { vapi_session_id: vapiSessionId }),
 

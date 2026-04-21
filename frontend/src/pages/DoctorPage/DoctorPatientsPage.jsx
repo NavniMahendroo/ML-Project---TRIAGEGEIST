@@ -4,10 +4,6 @@ import { api } from "../../lib/api";
 
 const adminLinks = [
   { to: "/admin/patients", label: "Assigned Patients" },
-  { to: "/admin/stats", label: "Overall Graphs" },
-  { to: "/admin/doctors", label: "Staff Management" },
-  { to: "/admin/outcomes", label: "Survived vs Admitted" },
-  { to: "/admin/settings", label: "Settings" },
   { to: "/signin", label: "Logout" },
 ];
 
