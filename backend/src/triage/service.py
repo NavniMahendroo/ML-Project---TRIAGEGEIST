@@ -1,4 +1,5 @@
 import logging
+import math
 import sys
 from datetime import datetime, UTC
 from pathlib import Path
@@ -15,6 +16,7 @@ from src.patients.service import (
     increment_patient_visit_counter,
 )
 from constants import FORM_OPTION_LABELS, MODEL_FEATURES, URGENCY_LABELS
+from constants.model import HX_FIELDS
 from src.triage.reconstruction import build_pre_pca_payload, prepare_visit_measurements
 from src.triage.schema import TriageSubmission
 from utils.id_generator import get_next_id
@@ -25,32 +27,35 @@ _repo_root = Path(__file__).resolve().parents[3]
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
-_ml_model_loaded = False
 predict_api = None
 
 try:
     from ml.src import predict_api  # noqa: E402
-except Exception as exc:  # pragma: no cover - import path/runtime environment issue
+except Exception as exc:
     predict_api = None
     log.exception("Failed to import ML predict_api: %s", exc)
 
 
 def load_ml_model():
-    global _ml_model_loaded
     if predict_api is None:
         raise RuntimeError("ML pipeline could not be imported.")
-
-    predict_api.load_model()
-    _ml_model_loaded = predict_api._model is not None
-    if not _ml_model_loaded:
-        raise RuntimeError("ML model failed to load.")
-    log.info("ML model loaded successfully.")
+    predict_api.load_all_models()
+    loaded = predict_api.get_engine_status().get('loaded_versions', [])
+    if not loaded:
+        raise RuntimeError("No ML models loaded.")
+    log.info("ML models loaded: %s", loaded)
 
 
 def get_engine_status() -> dict:
+    if predict_api is None:
+        return {"engine": "unavailable", "ml_model_loaded": False}
+    status = predict_api.get_engine_status()
+    loaded = status.get('loaded_versions', [])
     return {
-        "engine": "ml_pipeline" if _ml_model_loaded else "unavailable",
-        "ml_model_loaded": _ml_model_loaded,
+        "engine": "ml_pipeline" if loaded else "unavailable",
+        "ml_model_loaded": bool(loaded),
+        "loaded_versions": loaded,
+        "bert_loaded": status.get('bert_loaded', False),
     }
 
 
@@ -91,16 +96,44 @@ def _resolve_patient(submission: TriageSubmission) -> tuple[dict, bool]:
     return create_patient_record(submission.patient.model_dump()), True
 
 
-def _predict_triage(pre_pca_payload: dict) -> dict:
-    if not _ml_model_loaded:
+def _history_is_available(pre_pca_payload: dict) -> bool:
+    """Returns True if at least one hx_* field has a real value (not NaN)."""
+    for field in HX_FIELDS:
+        val = pre_pca_payload.get(field)
+        if val is not None and not (isinstance(val, float) and math.isnan(val)):
+            return True
+    return False
+
+
+def _predict_triage(pre_pca_payload: dict, visit_payload: dict) -> dict:
+    if predict_api is None:
         raise HTTPException(status_code=503, detail="ML model is not loaded.")
 
-    ml_result = predict_api.predict_patient(pre_pca_payload)
+    # ── Step 1: infer chief_complaint_system via v1.0.2-b if missing ─────────
+    cc_system = pre_pca_payload.get("chief_complaint_system")
+    if not cc_system or str(cc_system).strip().lower() in ("none", "null", "unknown", "nan", ""):
+        cc_raw = pre_pca_payload.get("chief_complaint_raw") or ""
+        log.info("chief_complaint_system missing — running v1.0.2-b on: %r", cc_raw)
+        inferred = predict_api.predict_chief_complaint_system(cc_raw)
+        if inferred:
+            pre_pca_payload = {**pre_pca_payload, "chief_complaint_system": inferred}
+            visit_payload = {**visit_payload, "chief_complaint_system": inferred}
+            log.info("v1.0.2-b inferred chief_complaint_system: %s", inferred)
+
+    # ── Step 2: choose v1.0.2 (history present) or v1.0.2-c (no history) ────
+    has_history = _history_is_available(pre_pca_payload)
+    ml_result = predict_api.predict_triage_acuity(pre_pca_payload, has_history=has_history)
+
     triage_acuity = int(ml_result["triage_acuity"])
+    model_version = ml_result.get("model_version", "v1.0.2")
+    log.info("Acuity=%s via %s (has_history=%s)", triage_acuity, model_version, has_history)
+
     return {
         "triage_acuity": triage_acuity,
         "urgency_label": URGENCY_LABELS.get(triage_acuity, "Unknown"),
-        "engine": "ml_pipeline",
+        "engine": f"ml_pipeline/{model_version}",
+        # Pass inferred cc_system back so the visit document can store it
+        "_resolved_visit_payload": visit_payload,
     }
 
 
@@ -179,16 +212,21 @@ def submit_triage(submission: TriageSubmission) -> dict:
         visit_document=visit_payload,
         history_document=history_document,
     )
-    prediction = _predict_triage(pre_pca_payload)
-    routing = _resolve_doctor_assignment(visit_payload, prediction)
-    visit_document = _create_visit_document(patient_document, visit_payload, prediction, routing)
+
+    prediction = _predict_triage(pre_pca_payload, visit_payload)
+
+    # Use the visit_payload that may have had chief_complaint_system filled in by v1.0.2-b
+    resolved_visit_payload = prediction.pop("_resolved_visit_payload", visit_payload)
+
+    routing = _resolve_doctor_assignment(resolved_visit_payload, prediction)
+    visit_document = _create_visit_document(patient_document, resolved_visit_payload, prediction, routing)
     increment_patient_visit_counter(patient_document["patient_id"])
 
     log.info(
-        "Created visit %s for patient %s with %s-feature payload and specialty %s.",
+        "Created visit %s for patient %s | engine=%s | specialty=%s",
         visit_document["visit_id"],
         patient_document["patient_id"],
-        len(MODEL_FEATURES),
+        prediction["engine"],
         visit_document.get("target_specialty"),
     )
 

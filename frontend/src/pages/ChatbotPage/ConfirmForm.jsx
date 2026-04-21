@@ -98,15 +98,12 @@ function Field({ field, value, isMissing, onFieldChange, error }) {
         <p style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#6b7280", marginBottom: "4px" }}>
           {FIELD_LABELS[field] || field}
         </p>
-        {isMissing && isEmpty ? (
-          <p style={{ fontSize: "13px", color: "#6b7280", fontStyle: "italic" }}>Pending</p>
-        ) : (
-          <input
-            style={{ width: "100%", background: "transparent", border: "none", outline: "none", fontSize: "14px", color: "#f5f5f5", fontWeight: "500" }}
-            value={value ?? ""}
-            onChange={(e) => onFieldChange(field, e.target.value)}
-          />
-        )}
+        <input
+          style={{ width: "100%", background: "transparent", border: "none", outline: "none", fontSize: "14px", color: isEmpty ? "#6b7280" : "#f5f5f5", fontWeight: "500" }}
+          placeholder={isMissing && isEmpty ? "Not provided — enter manually" : ""}
+          value={value ?? ""}
+          onChange={(e) => onFieldChange(field, e.target.value)}
+        />
       </div>
       {error && (
         <p style={{ fontSize: "10px", color: "#ef4444", paddingLeft: "4px" }}>{error}</p>

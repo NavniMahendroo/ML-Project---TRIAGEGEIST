@@ -19,6 +19,16 @@ _SITE_ID = "SITE-0001"
 _NURSE_ID = "self"
 
 
+def _normalize_patient_id(patient_id: str) -> str:
+    """Normalize patient ID to canonical format: TG-0002, TG-0015, etc."""
+    pid = patient_id.strip().upper()
+    if "-" in pid:
+        prefix, num = pid.rsplit("-", 1)
+        if num.isdigit():
+            return f"{prefix}-{num.zfill(4)}"
+    return pid
+
+
 def _clean(value):
     """Convert LLM string 'null'/'none'/'unknown' to Python None, and coerce numeric strings."""
     if value is None:
@@ -119,17 +129,27 @@ def submit_chatbot_triage(body: ChatbotSubmitRequest):
 
     # Resolve patient: body.patient_id → fields.patient_id → fuzzy name match
     patient_id = body.patient_id or _clean(fields.get("patient_id"))
+
+    if patient_id:
+        # Normalize ID format: "TG-2" or "TG-002" → "TG-0002" (4-digit zero-padded)
+        patient_id = _normalize_patient_id(patient_id)
+        log.info("[CHATBOT] Patient ID resolved: %s", patient_id)
+        # Verify the ID actually exists; if not, fall through to fuzzy match
+        try:
+            get_patient_by_id(patient_id)
+        except HTTPException:
+            log.warning("[CHATBOT] Patient ID %s not found — falling back to fuzzy match", patient_id)
+            patient_id = None
+
     if not patient_id:
         name = _clean(fields.get("patient_name"))
         age = _clean_num(fields.get("patient_age"))
-        log.info("[CHATBOT] No patient_id — fuzzy matching name=%s age=%s", name, age)
+        log.info("[CHATBOT] Fuzzy matching name=%s age=%s", name, age)
         if name:
             matches = fuzzy_match_patients(name=name, age=int(age) if age else None)
             if matches:
                 patient_id = matches[0]["patient_id"]
                 log.info("[CHATBOT] Fuzzy match found: %s (score=%.1f)", patient_id, matches[0].get("combined_score", 0))
-    else:
-        log.info("[CHATBOT] Patient ID from fields: %s", patient_id)
 
     if not patient_id:
         log.warning("[CHATBOT] Patient not identified — name=%s", fields.get("patient_name"))

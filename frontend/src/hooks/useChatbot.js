@@ -15,8 +15,11 @@ const STEPS = {
   ERROR: "error",
 };
 
+const LOCKED_STEPS = new Set([STEPS.CONFIRM, STEPS.SUBMITTING, STEPS.DONE]);
+
 export function useChatbot() {
   const vapiRef = useRef(null);
+  const stepRef = useRef(STEPS.IDLE);
 
   const [step, setStep] = useState(STEPS.IDLE);
   const [sessionId, setSessionId] = useState(null);
@@ -25,10 +28,17 @@ export function useChatbot() {
   const [fieldsMissing, setFieldsMissing] = useState([]);
   const [patientId, setPatientId] = useState(null);
   const [userRole, setUserRole] = useState("patient");
+  const collectedFieldsRef = useRef({});
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcript, setTranscript] = useState("");
+
+  const setStepSynced = useCallback((next) => {
+    const value = typeof next === "function" ? next(stepRef.current) : next;
+    stepRef.current = value;
+    setStep(value);
+  }, []);
 
   const addMessage = useCallback((role, text) => {
     setMessages((prev) => [
@@ -38,7 +48,7 @@ export function useChatbot() {
   }, []);
 
   const startCall = useCallback(async () => {
-    setStep(STEPS.CONNECTING);
+    setStepSynced(STEPS.CONNECTING);
     setError(null);
 
     try {
@@ -49,7 +59,7 @@ export function useChatbot() {
       vapiRef.current = vapi;
 
       vapi.on("call-start", () => {
-        setStep(STEPS.ACTIVE);
+        setStepSynced(STEPS.ACTIVE);
         addMessage("bot", "Hello! Are you the patient, or are you here for someone else?");
       });
 
@@ -57,6 +67,10 @@ export function useChatbot() {
       vapi.on("speech-end", () => setIsSpeaking(false));
 
       vapi.on("message", (msg) => {
+        // Once the user is reviewing or submitting, ignore all LLM tool calls
+        // so they cannot overwrite edits the patient is making in the form.
+        if (LOCKED_STEPS.has(stepRef.current)) return;
+
         if (msg.type === "transcript") {
           if (msg.transcriptType === "partial") {
             setTranscript(msg.transcript);
@@ -77,37 +91,49 @@ export function useChatbot() {
       vapi.on("call-end", () => {
         setIsSpeaking(false);
         setTranscript("");
-        // If confirm panel is open, keep it open — call ending is expected at this point
-        setStep((prev) => (prev === STEPS.CONFIRM || prev === STEPS.SUBMITTING || prev === STEPS.DONE) ? prev : STEPS.IDLE);
+        setStepSynced((prev) => {
+          if (LOCKED_STEPS.has(prev)) return prev;
+          if (Object.keys(collectedFieldsRef.current).length > 0) return STEPS.CONFIRM;
+          return STEPS.IDLE;
+        });
       });
 
       vapi.on("error", (err) => {
         setError(err?.message || "Voice connection error");
-        // Only go to ERROR if we haven't reached the confirm step yet
-        setStep((prev) => (prev === STEPS.CONFIRM || prev === STEPS.SUBMITTING || prev === STEPS.DONE) ? prev : STEPS.ERROR);
+        setStepSynced((prev) => {
+          if (LOCKED_STEPS.has(prev)) return prev;
+          if (Object.keys(collectedFieldsRef.current).length > 0) return STEPS.CONFIRM;
+          return STEPS.ERROR;
+        });
       });
 
       await vapi.start(VAPI_ASSISTANT_ID);
     } catch (err) {
       setError(err.message || "Failed to start session");
-      setStep(STEPS.ERROR);
+      setStepSynced(STEPS.ERROR);
     }
   }, [addMessage]);
 
   const handleToolCall = useCallback(async (name, args, sid) => {
     if (name === "update_fields") {
-      setCollectedFields((prev) => ({ ...prev, ...args.fields }));
+      setCollectedFields((prev) => {
+        const next = { ...prev, ...args.fields };
+        collectedFieldsRef.current = next;
+        return next;
+      });
       if (args.patient_id) setPatientId(args.patient_id);
       if (args.user_role) setUserRole(args.user_role);
       if (args.fields_missing) setFieldsMissing(args.fields_missing);
     }
 
     if (name === "show_confirm") {
-      setCollectedFields(args.collected_fields || {});
+      const fields = args.collected_fields || {};
+      collectedFieldsRef.current = fields;
+      setCollectedFields(fields);
       setFieldsMissing(args.fields_missing || []);
       setPatientId(args.patient_id);
       setUserRole(args.user_role || "patient");
-      setStep(STEPS.CONFIRM);
+      setStepSynced(STEPS.CONFIRM);
     }
   }, []);
 
@@ -117,7 +143,7 @@ export function useChatbot() {
   }, []);
 
   const submitTriage = useCallback(async (finalFields) => {
-    setStep(STEPS.SUBMITTING);
+    setStepSynced(STEPS.SUBMITTING);
     endCall();
 
     try {
@@ -132,15 +158,19 @@ export function useChatbot() {
       };
       const data = await api.submitChatbot(payload);
       setResult(data);
-      setStep(STEPS.DONE);
+      setStepSynced(STEPS.DONE);
     } catch (err) {
       setError(err.message || "Submission failed");
-      setStep(STEPS.CONFIRM); // keep form open so user can retry
+      setStepSynced(STEPS.CONFIRM); // keep form open so user can retry
     }
   }, [sessionId, patientId, userRole, collectedFields, messages, fieldsMissing, endCall]);
 
   const updateField = useCallback((field, value) => {
-    setCollectedFields((prev) => ({ ...prev, [field]: value }));
+    setCollectedFields((prev) => {
+      const next = { ...prev, [field]: value };
+      collectedFieldsRef.current = next;
+      return next;
+    });
   }, []);
 
   useEffect(() => {

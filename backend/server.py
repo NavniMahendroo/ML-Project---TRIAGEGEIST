@@ -54,6 +54,8 @@ def health_check():
         "status": "ok",
         "engine": status["engine"],
         "ml_model_loaded": status["ml_model_loaded"],
+        "loaded_versions": status.get("loaded_versions", []),
+        "bert_loaded": status.get("bert_loaded", False),
         "database_connected": True,
     }
 

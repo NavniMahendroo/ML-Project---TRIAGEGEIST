@@ -24,7 +24,7 @@ export default function ChatbotPage() {
   } = useChatbot();
 
   const bottomRef = useRef(null);
-  const isConfirm = step === STEPS.CONFIRM;
+  const isConfirm = step === STEPS.CONFIRM || step === STEPS.SUBMITTING;
   const isDone = step === STEPS.DONE;
 
   useEffect(() => {
