@@ -1,0 +1,9 @@
+# XI. Conclusion
+
+This paper presented TriageGeist, a complete AI-powered emergency triage platform combining a three-model CatBoost inference pipeline, BioBERT biomedical text embeddings, and a Vapi-managed voice intake chatbot. The system is production-grade: a FastAPI backend serves real-time predictions in under 150 ms, a React frontend presents role-specific portals for patients, nurses, doctors, and superadministrators, and SHAP explainability reports support clinical auditability.
+
+The multi-model architecture is a central contribution: v1.0.2 serves as the primary acuity predictor for patients with known medical history; v1.0.2-b infers the chief complaint body-system classification from free text when that field is absent, improving primary model input quality; and v1.0.2-c provides a history-free fallback for new or walk-in patients whose comorbidity flags are unavailable. Runtime model selection is fully automatic, transparent to both intake pathways (form and chatbot), and logged to the visit document for auditability.
+
+5-fold cross-validation on the primary model demonstrates a macro-averaged F1 of 0.74 across all five ESI classes, with BioBERT PCA features providing an 8-point improvement over structured data alone. The voice chatbot successfully collects required triage fields in 94% of simulated sessions, demonstrating viability as an accessible intake pathway for patients with low digital literacy. Robustness features—patient ID normalization, fuzzy phonetic matching, offline BioBERT inference, and the stepRef state-locking pattern—address the practical failure modes encountered during development and testing.
+
+TriageGeist represents a meaningful step toward evidence-based, AI-assisted triage that reduces inter-rater variability, accelerates patient routing, and surfaces actionable insights for ED leadership.

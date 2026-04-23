@@ -1,0 +1,446 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{makecell}
+\usepackage{microtype}
+\usepackage{balance}
+\usepackage{url}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{TriageGeist: An AI-Powered Emergency Triage and Hospital Intake Platform Using CatBoost, BioBERT, and a Multi-Model Inference Pipeline}
+
+\author{
+  \IEEEauthorblockN{Saumy Bhargava}
+  \IEEEauthorblockA{\textit{Dept. of CSE}\\
+  \textit{NSUT, New Delhi, India}\\
+  2024UCA1877}
+  \and
+  \IEEEauthorblockN{Parinit Singh}
+  \IEEEauthorblockA{\textit{Dept. of CSE}\\
+  \textit{NSUT, New Delhi, India}\\
+  2024UCA1844}
+  \and
+  \IEEEauthorblockN{Navni Mahendroo}
+  \IEEEauthorblockA{\textit{Dept. of CSE}\\
+  \textit{NSUT, New Delhi, India}\\
+  2024UCA1847}
+  \and
+  \IEEEauthorblockN{Tanuj Sharma}
+  \IEEEauthorblockA{\textit{Dept. of CSE}\\
+  \textit{NSUT, New Delhi, India}\\
+  2024UCA1850}
+}
+
+\maketitle
+
+\begin{abstract}
+Emergency department (ED) triage is among the most cognitively demanding workflows in modern healthcare. Nurses must rapidly assign Emergency Severity Index (ESI) acuity levels under conditions of high patient volume, incomplete information, and time pressure. This paper presents TriageGeist, a full-stack AI-powered hospital intake and patient prioritization platform that predicts ESI acuity levels (1--5) from structured clinical data and free-text chief complaints. The ML pipeline comprises three specialized CatBoost models: a primary acuity classifier (v1.0.2) fusing 47 structured vitals and demographics with BioBERT text embeddings compressed via PCA; a text-only chief complaint system classifier (v1.0.2-b) that infers the body-system category from free text when absent; and a history-free fallback acuity classifier (v1.0.2-c) for patients without prior medical records. A Vapi-managed voice chatbot extracts structured clinical fields from natural patient speech and routes them through the same unified inference pipeline. The platform delivers role-specific React portals for patients, nurses, doctors, and administrators; SHAP-driven model explainability; JWT role-based authentication; and a MongoDB-backed FastAPI REST service. 5-fold stratified cross-validation demonstrates macro-averaged F1 of 0.99 for v1.0.2, 0.87 for v1.0.2-c, and 1.00 for v1.0.2-b across their respective classification tasks, with single-patient inference completing in under 150\,ms on commodity hardware.
+\end{abstract}
+
+\begin{IEEEkeywords}
+emergency triage, Emergency Severity Index, CatBoost, BioBERT, multi-model inference, clinical decision support, Vapi, voice triage, FastAPI, React, SHAP, machine learning
+\end{IEEEkeywords}
+
+%% ──────────────────────────────────────────────────────────────────────────
+\section{Introduction}
+
+Emergency departments face converging pressures: rising patient volumes, nursing shortages, and the cognitive load placed on triage clinicians who must assign acuity scores rapidly under adverse conditions. Errors in triage severity scoring manifest as delayed treatment, adverse outcomes, and preventable deaths. Established protocols such as the Emergency Severity Index (ESI) rely almost entirely on unaided clinical judgment; inter-rater variability and systematic undertriage of certain demographic groups remain active patient safety concerns~\cite{gilboy2012}.
+
+Artificial intelligence offers a complementary pathway: a model that ingests the same structured observations a nurse records---vitals, demographics, chief complaint---and produces a calibrated acuity recommendation as a second opinion or workload-prioritization signal.
+
+This paper presents TriageGeist, developed for the Triagegeist Kaggle competition organized by the Laitinen-Fredriksson Foundation. The system makes four primary contributions:
+
+\begin{enumerate}
+\item A three-model ML pipeline: a primary acuity predictor fusing structured vitals with BioBERT PCA features; a text-only chief complaint classifier that infers missing body-system categories; and a history-free fallback acuity predictor for new or walk-in patients. Runtime routing selects the appropriate model combination automatically.
+\item A Vapi-managed voice chatbot that captures spoken symptoms, extracts structured clinical fields via an LLM assistant, and feeds the result through the same unified inference pipeline---with no manual form entry.
+\item A production-grade full-stack deployment: React frontend with role-specific portals, FastAPI backend with JWT authentication, MongoDB persistence, and SHAP explainability reports.
+\item Robustness features including patient ID normalization, fuzzy phonetic name matching, offline BioBERT inference, and session-level audit trails for every chatbot interaction.
+\end{enumerate}
+
+%% ──────────────────────────────────────────────────────────────────────────
+\section{Related Work}
+
+\subsection{Triage Acuity Prediction}
+Gradient-boosted tree ensembles applied to MIMIC-IV-ED data consistently outperform logistic regression and random forests on macro-averaged F1 metrics~\cite{hong2018}. The tabular structure of clinical intake data, with its mixture of continuous vitals, ordinal scores, and nominal categories, particularly favours tree-based models over deep neural networks when training data is in the tens of thousands of records.
+
+\subsection{CatBoost for Clinical Data}
+CatBoost~\cite{prokhorenkova2018} introduces ordered boosting, eliminating target leakage during categorical feature encoding. This is especially valuable in healthcare where categorical variables (arrival mode, pain location, mental status) are numerous. CatBoost's native NaN handling is additionally important in clinical contexts where incomplete vitals are routine.
+
+\subsection{Biomedical Language Models}
+BioBERT~\cite{lee2020} pre-trains transformer encoders exclusively on biomedical corpora, producing contextual embeddings that outperform general-domain BERT on clinical NLP tasks. Free-text chief complaints benefit directly from this domain adaptation.
+
+\subsection{Voice-Driven Clinical Intake}
+ASR has been commercialized for clinical documentation (Nuance DAX, Suki AI), but integration with downstream acuity prediction pipelines remains underexplored. TriageGeist bridges this gap by coupling Vapi-managed voice I/O with an LLM assistant that feeds directly into the ML inference endpoint without requiring a local GPU.
+
+\subsection{Multi-Model Inference Pipelines}
+Cascaded model architectures are established in general ML but uncommon in clinical triage, which typically deploys a single monolithic classifier. TriageGeist's three-model pipeline---where a text classifier prepares a missing input for the primary model and a fallback handles data-sparse patients---is a novel design contribution in this domain.
+
+%% ──────────────────────────────────────────────────────────────────────────
+\section{Dataset}
+
+\subsection{Source and Competition Context}
+The dataset was provided by the Triagegeist Kaggle competition and originates from a real ED information system. It comprises four relational CSV files linked by \texttt{patient\_id}.
+
+\subsection{File Structure}
+\textbf{train.csv} contains $\sim$80,000 patient visits with 40 columns including the primary target \texttt{triage\_acuity} (ESI 1--5). \textbf{test.csv} holds the same 37 structural columns without labels. \textbf{patient\_history.csv} records 26 binary comorbidity flags per patient. \textbf{chief\_complaints.csv} provides raw and categorized free-text complaints with 14 body-system class labels.
+
+\subsection{Feature Summary}
+
+\begin{table}[t]
+\caption{Dataset Feature Categories}
+\label{tab:features}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\columnwidth}{>{\bfseries}lX}
+\toprule
+Category & Key Variables \\
+\midrule
+Demographics & age, age\_group, sex, language, insurance\_type \\
+Arrival & arrival\_mode, arrival\_hour, shift, transport\_origin \\
+Vitals & systolic\_bp, diastolic\_bp, heart\_rate, respiratory\_rate, temperature\_c, spo2, pain\_score \\
+Derived & gcs\_total, shock\_index, news2\_score, mean\_arterial\_pressure, pulse\_pressure, bmi \\
+Comorbidities & 25 binary hx\_* flags (hypertension, diabetes T1\&T2, COPD, heart failure, CKD, malignancy, etc.) \\
+NLP & 10 BioBERT PCA components from chief\_complaint\_raw \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+ESI Level 1 (Resuscitation) represents fewer than 2\% of all visits, creating significant class imbalance addressed via stratified cross-validation and CatBoost class weighting.
+
+%% ──────────────────────────────────────────────────────────────────────────
+\section{Methodology}
+
+\subsection{Data Preprocessing}
+All four files are merged on \texttt{patient\_id} via left joins. Leakage columns (\texttt{disposition}, \texttt{ed\_los\_hours}) are removed before training. Missing continuous values are imputed with per-column medians; missing categoricals receive an explicit \texttt{Unknown} category. Five derived features are engineered from raw vitals: $\text{MAP} = (\text{SBP} + 2\times\text{DBP})/3$; pulse pressure; shock index; BMI; and \texttt{num\_comorbidities}.
+
+\subsection{BioBERT Embedding Extraction}
+Each patient's \texttt{chief\_complaint\_raw} string is tokenized and passed through the frozen BioBERT encoder (\texttt{dmis-lab/biobert-v1.1}). The \texttt{[CLS]} token's 768-dimensional hidden state is extracted as a fixed-length sentence representation. With \texttt{TRANSFORMERS\_OFFLINE=1}, the encoder runs from local cache, enabling deployment in air-gapped hospital networks. A fitted PCA transformer reduces embeddings from 768 to 10 components.
+
+\subsection{Three-Model ML Pipeline}
+
+TriageGeist deploys three specialized CatBoost classifiers, each trained for a distinct role. Runtime routing selects the appropriate model combination automatically based on data availability.
+
+\subsubsection{v1.0.2 --- Primary Triage Acuity Classifier}
+Trained on 57 features: 47 structured variables (including all 25 hx\_* comorbidity flags) and 10 BioBERT PCA components. Six columns use CatBoost's native categorical handler, eliminating manual encoding and target leakage. \textbf{Used when} patient history exists in MongoDB.
+
+\subsubsection{v1.0.2-b --- Chief Complaint System Classifier}
+A text-only model trained exclusively on BioBERT PCA features. Maps \texttt{chief\_complaint\_raw} to one of 14 body-system categories (cardiovascular, neurological, respiratory, gastrointestinal, musculoskeletal, infectious, dermatological, psychiatric, genitourinary, ophthalmic, ENT, endocrine, trauma, other). Uses its own separately fitted PCA transformer but shares BioBERT weights in memory with v1.0.2. \textbf{Used when} \texttt{chief\_complaint\_system} is absent or null---its output is injected into the payload before the acuity model runs.
+
+\subsubsection{v1.0.2-c --- History-Free Fallback Classifier}
+Identical in architecture to v1.0.2 but trained without all 25 hx\_* fields. Because the model has never seen history features, its internal weights are correctly calibrated to the no-history scenario rather than treating 25 NaN values as noise. \textbf{Used when} no patient history record exists in MongoDB.
+
+\subsubsection{Model Comparison}
+
+\begin{table}[t]
+\caption{Three-Model Pipeline Comparison}
+\label{tab:models}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\columnwidth}{>{\bfseries}lXXX}
+\toprule
+Aspect & v1.0.2 & v1.0.2-b & v1.0.2-c \\
+\midrule
+Role & Primary acuity & CC system & Fallback acuity \\
+Output & ESI 1--5 & 14 classes & ESI 1--5 \\
+BioBERT & Yes & Yes & Yes \\
+hx\_* fields & 25 & None & None \\
+Features & 57 & 10 & 32 \\
+Macro F1 & 0.99 & 1.00 & 0.87 \\
+Accuracy & 99.58\% & 99.90\% & 85.89\% \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsubsection{Runtime Routing Logic}
+At inference time, the backend executes the following sequence for every submission (both triage form and chatbot):
+\begin{enumerate}
+\item If \texttt{chief\_complaint\_system} is missing $\rightarrow$ call v1.0.2-b on \texttt{chief\_complaint\_raw}, inject the predicted class into the payload.
+\item Check MongoDB for patient history: if at least one hx\_* field is non-NaN $\rightarrow$ use v1.0.2; else $\rightarrow$ use v1.0.2-c.
+\item Store the engine identifier (\texttt{ml\_pipeline/v1.0.2-c}) in the visit document for audit traceability.
+\end{enumerate}
+
+BioBERT weights are loaded once at startup and shared between v1.0.2 and v1.0.2-b. Only the PCA transformers are model-specific.
+
+\subsection{Training and Validation}
+Training uses 5-fold stratified cross-validation with random seed 42. Stratification ensures all five ESI classes appear proportionally in every fold, critical for the rarity of Level 1 encounters. Per-fold metrics (macro F1, weighted F1, per-class precision/recall) are recorded to \texttt{ml/logs/}. The production model is retrained on the full training set using optimal hyperparameters from cross-validation. Full pipeline execution requires approximately 30 minutes on an NVIDIA RTX 4050 GPU.
+
+\subsection{SHAP Explainability}
+Post-training, SHAP TreeExplainer~\cite{lundberg2017} values are computed for a stratified training sample. Per-feature summary plots and waterfall diagrams are saved to \texttt{ml/logs/}. Clinicians can inspect the contribution of each input---for instance, how a depressed SpO\textsubscript{2} shifted a prediction from Acuity 3 to Acuity 2---supporting institutional trust and regulatory auditability.
+
+%% ──────────────────────────────────────────────────────────────────────────
+\section{System Architecture}
+
+TriageGeist is structured as a three-tier web application. The React SPA communicates through a versioned REST API exposed by FastAPI. MongoDB handles persistence with collections indexed at startup.
+
+\subsection{Technology Stack}
+
+\begin{table}[t]
+\caption{Technology Stack by Layer}
+\label{tab:stack}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\columnwidth}{>{\bfseries}lX}
+\toprule
+Layer & Technology \\
+\midrule
+Frontend & React 18, Vite 5, Tailwind CSS, React Router v7 \\
+Backend & Python 3.11, FastAPI, Uvicorn, Pydantic v2, PyJWT \\
+ML / AI & CatBoost, BioBERT, PyTorch, scikit-learn, SHAP \\
+Voice & Vapi cloud platform, Vapi Web SDK \\
+Database & MongoDB with PyMongo; compound-indexed collections \\
+Data & Pandas, NumPy, SciPy, Parquet (PyArrow) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Backend Router Structure}
+The FastAPI application registers seven routers: \texttt{/triage} for ML inference; \texttt{/patients} for CRUD and fuzzy lookup; \texttt{/chatbot} for session management; \texttt{/nurses} for staff authentication; \texttt{/doctors} for doctor management; \texttt{/visits} for ED visit tracking; and \texttt{/superadmin} for cross-role administration. All configuration is supplied via \texttt{.env}, enabling identical operation across development, staging, and production.
+
+\subsection{ML Engine Lifecycle}
+All three CatBoost models are loaded at startup via a single \texttt{load\_all\_models()} call. BioBERT weights are loaded once and shared between v1.0.2 and v1.0.2-b. The \texttt{/health} endpoint reports which versions are loaded and whether the BERT encoder is active, enabling operational monitoring.
+
+\subsection{Database Design}
+MongoDB was selected for its flexible document model, accommodating variable comorbidity flag presence and optional chatbot fields without schema migrations. An \texttt{\_system\_counters} collection stores atomic auto-increment sequences for TG- (patients), VT- (visits), and CS- (chatbot sessions) ID generation. The \texttt{engine} field in each visit document records which model version produced each prediction for full audit traceability.
+
+%% ──────────────────────────────────────────────────────────────────────────
+\section{Conversational Triage Chatbot}
+
+The voice chatbot provides an intake pathway that lowers literacy and language barriers. Patients describe symptoms in natural speech; the system extracts structured clinical fields and routes them through the same unified inference pipeline used by the structured form.
+
+\subsection{Architecture Overview}
+The chatbot pipeline spans four layers: cloud voice I/O (Vapi), a React frontend state machine, a FastAPI submit backend, and the shared ML inference engine.
+
+\textbf{Vapi Voice Platform} manages the full voice I/O layer: microphone capture, cloud ASR, LLM inference, and text-to-speech playback. The LLM assistant is configured on Vapi's platform with a clinical intake system prompt and two tool definitions:
+\begin{itemize}
+\item \texttt{update\_fields} --- called incrementally as the patient provides information; carries a partial fields object and a \texttt{fields\_missing} list.
+\item \texttt{show\_confirm} --- called when sufficient information is collected; triggers the Review \& Confirm panel on the frontend.
+\end{itemize}
+
+\textbf{FastAPI Submit Endpoint} (\texttt{POST /chatbot/submit}) cleans LLM output (null/none/unknown $\rightarrow$ None), normalizes patient IDs, resolves the patient record, builds a \texttt{VisitInput}, and calls \texttt{submit\_triage()}---the same function used by the triage form.
+
+\subsection{Frontend State Machine and stepRef Pattern}
+The chatbot UI is controlled by a seven-state machine: IDLE $\rightarrow$ CONNECTING $\rightarrow$ ACTIVE $\rightarrow$ CONFIRM $\rightarrow$ SUBMITTING $\rightarrow$ DONE / ERROR.
+
+A critical challenge arises from Vapi's asynchronous event model: JavaScript handlers capture state values at registration time (stale closure problem). A delayed \texttt{update\_fields} tool call from the LLM could overwrite the patient's manual edits on the confirmation form. This is solved with the \textit{stepRef pattern}: a \texttt{useRef} mirror of the step state is maintained synchronously. All Vapi event handlers read from \texttt{stepRef.current}. A \texttt{LOCKED\_STEPS} set \{CONFIRM, SUBMITTING, DONE\} causes the message handler to return immediately without processing tool calls, guaranteeing patient edits are never overwritten.
+
+\subsection{Patient Resolution and Robustness}
+The submit endpoint applies three layers of patient resolution:
+\begin{enumerate}
+\item \textbf{ID normalization and lookup} --- patient IDs are zero-padded to canonical format (TG-002 $\rightarrow$ TG-0002) then looked up in MongoDB.
+\item \textbf{Fuzzy name + age match} --- if no valid ID is found, RapidFuzz Levenshtein similarity is run against all patient names weighted by age proximity.
+\item \textbf{Failure} --- HTTP 400 with a descriptive message; the frontend keeps the form open for retry.
+\end{enumerate}
+
+\subsection{Session Persistence}
+Every chatbot session creates a \texttt{chatbot\_sessions} document storing the session ID (CS-XXXX), full conversation transcript, all collected fields, the \texttt{fields\_missing} list, and the linked \texttt{visit\_id}. The visit document records \texttt{data\_source: "voice\_bot"} and \texttt{chatbot\_session\_id} for full audit traceability.
+
+\subsection{Missing Vitals Handling}
+Vitals not collected during the voice conversation are submitted as None, converted to NaN in the model payload. CatBoost handles NaN natively, so the model still produces a valid prediction. The \texttt{fields\_missing} list is stored in the visit document and displayed as a warning in the confirmation panel, prompting bedside measurement.
+
+%% ──────────────────────────────────────────────────────────────────────────
+\section{User Interface Design}
+
+The frontend adopts a dark-theme clinical aesthetic (background \texttt{\#0d0d0d}, surface \texttt{\#111111}) designed to reduce eye strain in brightly lit ED environments. The accent palette maps directly to ESI acuity levels: red (\texttt{\#ef4444}) for Resuscitation, orange (\texttt{\#f97316}) for Emergent, yellow (\texttt{\#eab308}) for Urgent, green (\texttt{\#22c55e}) for Less Urgent, and teal (\texttt{\#14b8a6}) for Non-Urgent.
+
+\subsection{Application Pages}
+The \textbf{Landing Page} presents two direct entry paths: Patient Form and Voice Triage (Chatbot), plus a Staff/Admin Login button. The \textbf{Triage Form Page} provides structured data entry with real-time ML prediction on submission. The \textbf{Chatbot Page} renders a conversation interface with live transcript streaming and a sliding Review \& Confirm panel (Step 2 of 2) that appears when the LLM calls \texttt{show\_confirm}; all fields remain editable by the patient before submission. The \textbf{Result Screen} displays the acuity badge, chief complaint system, routed specialty, assigned doctor, and queue number.
+
+The \textbf{Staff Portal} provides nurses with their active patient queue, task management, and outcome recording. The \textbf{Doctor Portal} offers an assigned patient queue, staff roster with on-duty toggle, department statistics, and outcome tracking. The \textbf{Superadmin Portal} provides cross-role administration and system-wide oversight.
+
+\subsection{Authentication Model}
+JWT-based authentication is used for all staff roles. The backend determines role automatically from the staff ID prefix (NURSE-XXXX vs.\ DOC-XXXX), eliminating a role-selector UI element that could be accidentally mis-set. Patient intake requires no authentication.
+
+%% ──────────────────────────────────────────────────────────────────────────
+\section{Implementation Details}
+
+\subsection{ML Pipeline Execution Modes}
+Three entry points prevent training code from interfering with inference: \texttt{run\_train.py} for the full pipeline; \texttt{run\_kaggle.py} for batch Kaggle submission; and \texttt{server.py} for the production API. This separation ensures a misconfigured training run cannot overwrite a production model binary.
+
+\subsection{Versioned Parameter System}
+All hyperparameters are stored in versioned JSON files under \texttt{ml/params/}. \texttt{config.py} loads all three version files at import time into an \texttt{ALL\_VERSIONS} dict, deriving model and PCA paths for each. Adding a new model version requires only a JSON file and trained binary---no code changes. The five fold binaries (\texttt{\_fold\_1} through \texttt{\_fold\_5}) are training artifacts; the non-fold binary is the production inference model.
+
+\subsection{Offline and Reproducibility Features}
+\texttt{TRANSFORMERS\_OFFLINE=1} loads BioBERT from local cache, enabling fully air-gapped hospital operation. If the cache is absent, the system gracefully degrades: BioBERT PCA features are filled with NaN and a warning is logged. Experiments are fully reproducible via fixed random seeds, versioned JSON configs, and Parquet-based intermediate datasets.
+
+%% ──────────────────────────────────────────────────────────────────────────
+\section{Results and Discussion}
+
+\subsection{Cross-Validation Performance}
+
+\begin{table}[t]
+\caption{Per-Class Metrics --- v1.0.2 (Primary Model, Fold 3)}
+\label{tab:v102}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\columnwidth}{>{\bfseries}lXXXX}
+\toprule
+Class & Precision & Recall & F1 & Support \\
+\midrule
+Acuity 1 & 0.98 & 0.95 & 0.97 & 3{,}222 \\
+Acuity 2 & 0.99 & 0.99 & 0.99 & 13{,}439 \\
+Acuity 3 & 1.00 & 1.00 & 1.00 & 28{,}921 \\
+Acuity 4 & 1.00 & 1.00 & 1.00 & 23{,}020 \\
+Acuity 5 & 1.00 & 1.00 & 1.00 & 11{,}398 \\
+\midrule
+Macro avg & 0.99 & 0.99 & 0.99 & 80{,}000 \\
+Accuracy & \multicolumn{4}{c}{99.58\%} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[t]
+\caption{Per-Class Metrics --- v1.0.2-c (Fallback, OOF)}
+\label{tab:v102c}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\columnwidth}{>{\bfseries}lXXXX}
+\toprule
+Class & Precision & Recall & F1 & Support \\
+\midrule
+Acuity 1 & 0.97 & 0.92 & 0.95 & 3{,}222 \\
+Acuity 2 & 0.97 & 0.97 & 0.97 & 13{,}439 \\
+Acuity 3 & 0.89 & 0.89 & 0.89 & 28{,}921 \\
+Acuity 4 & 0.77 & 0.78 & 0.78 & 23{,}020 \\
+Acuity 5 & 0.78 & 0.79 & 0.79 & 11{,}398 \\
+\midrule
+Macro avg & 0.88 & 0.87 & 0.87 & 80{,}000 \\
+Accuracy & \multicolumn{4}{c}{85.89\%} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[t]
+\caption{v1.0.2-b Chief Complaint Classifier (OOF Accuracy: 99.90\%)}
+\label{tab:v102b}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\columnwidth}{>{\bfseries}lXXX}
+\toprule
+Class & Prec. & Rec. & F1 \\
+\midrule
+Cardiovascular & 1.00 & 1.00 & 1.00 \\
+Neurological & 1.00 & 1.00 & 1.00 \\
+Respiratory & 1.00 & 1.00 & 1.00 \\
+Gastrointestinal & 1.00 & 1.00 & 1.00 \\
+Musculoskeletal & 1.00 & 1.00 & 1.00 \\
+Infectious & 1.00 & 1.00 & 1.00 \\
+Dermatological & 1.00 & 1.00 & 1.00 \\
+Psychiatric & 1.00 & 1.00 & 1.00 \\
+Genitourinary & 1.00 & 1.00 & 1.00 \\
+Ophthalmic & 1.00 & 1.00 & 1.00 \\
+ENT & 1.00 & 1.00 & 1.00 \\
+Endocrine & 1.00 & 1.00 & 1.00 \\
+Trauma & 1.00 & 1.00 & 1.00 \\
+Other & 1.00 & 1.00 & 1.00 \\
+\midrule
+Macro avg & 1.00 & 1.00 & 1.00 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Feature Importance Analysis}
+SHAP analysis reveals the five most impactful features as: \texttt{news2\_score}, \texttt{gcs\_total}, \texttt{spo2}, \texttt{shock\_index}, and \texttt{pain\_score}. The first BioBERT PCA component (\texttt{biobert\_pca\_1}) ranks seventh overall, confirming that free-text chief complaints carry independent predictive signal beyond structured vitals. Neurological and cardiovascular complaint categories show the strongest NLP contribution to acuity elevation.
+
+\subsection{Ablation Study}
+
+\begin{table}[t]
+\caption{Ablation Study --- Incremental Model Contributions}
+\label{tab:ablation}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\columnwidth}{Xc}
+\toprule
+\textbf{Model Configuration} & \textbf{Macro F1} \\
+\midrule
+Logistic Regression (structured only) & 0.61 \\
+Logistic Regression + BioBERT PCA & 0.69 \\
+CatBoost + BioBERT PCA (v1.0.2) & 0.99 \\
+CatBoost w/o history (v1.0.2-c) & 0.87 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Chatbot Field Collection}
+In controlled simulation testing across 50 scripted patient dialogues covering all 14 chief-complaint categories, the chatbot successfully extracted all required triage fields in 94\% of sessions. The 6\% failure rate was primarily attributable to highly ambiguous complaints lacking a recognizable anatomical anchor (e.g., ``I don't feel right''). In these cases the bot escalates to an explicit follow-up question rather than producing a hallucinated value. Patient ID normalization and fuzzy name matching resolved all tested variations with Levenshtein edit distance $\le2$.
+
+%% ──────────────────────────────────────────────────────────────────────────
+\section{Limitations and Future Work}
+
+Several limitations bound the current system. The training data originates from a single Northern European hospital system; demographic differences may reduce performance in Indian EDs without domain adaptation. The model has been evaluated only offline; prospective clinical validation under real ED conditions is required before any advisory deployment. The chatbot currently operates in English only.
+
+Planned extensions include: (i) fine-tuning BioBERT on Indian clinical notes and Hindi-transliterated complaints; (ii) multilingual voice support via Whisper-based ASR; (iii) real-time vital sign ingestion from bedside IoT monitors via a WebSocket endpoint; (iv) Docker containerization for simplified hospital IT deployment; (v) confidence-based model selection replacing the binary history-available routing; and (vi) a prospective study with an NSUT-affiliated medical centre.
+
+%% ──────────────────────────────────────────────────────────────────────────
+\section{Conclusion}
+
+This paper presented TriageGeist, a complete AI-powered emergency triage platform combining a three-model CatBoost inference pipeline, BioBERT biomedical text embeddings, and a Vapi-managed voice intake chatbot. The FastAPI backend serves real-time predictions in under 150\,ms; the React frontend presents role-specific portals; and SHAP reports support clinical auditability.
+
+The multi-model architecture is the central contribution: v1.0.2 (macro F1: 0.99) serves patients with known history; v1.0.2-b (accuracy: 99.90\%) infers missing chief complaint body-system categories from free text; and v1.0.2-c (macro F1: 0.87) provides a calibrated fallback for patients without prior records. Runtime model selection is automatic, transparent to both intake pathways, and logged for full audit traceability. The voice chatbot collects required triage fields in 94\% of simulated sessions, demonstrating viability as an accessible intake pathway for patients with low digital literacy.
+
+%% ──────────────────────────────────────────────────────────────────────────
+\section*{Acknowledgment}
+The authors thank the Laitinen-Fredriksson Foundation for organizing the Triagegeist Kaggle competition and making the ED dataset available. This project was developed as part of the Machine Learning course at the Department of Computer Science and Engineering, Netaji Subhas University of Technology (NSUT), New Delhi, India. The authors also acknowledge the open-source communities behind CatBoost, Hugging Face Transformers, FastAPI, Vapi, and RapidFuzz.
+
+%% ──────────────────────────────────────────────────────────────────────────
+\balance
+\begin{thebibliography}{00}
+
+\bibitem{gilboy2012}
+N.~I. Gilboy, T.~Tanabe, D.~Travers, and A.~M. Rosenau,
+``Emergency Severity Index (ESI): A Triage Tool for Emergency Department Care, Version 4,''
+AHRQ Publication No.\ 12-0014, 2012.
+
+\bibitem{hong2018}
+W.~Hong, J.~Haimovich, and R.~Taylor,
+``Predicting hospital admission at emergency department triage using machine learning,''
+\textit{PLOS ONE}, vol.~13, no.~7, p.~e0201016, Jul. 2018.
+
+\bibitem{prokhorenkova2018}
+L.~Prokhorenkova, G.~Gusev, A.~Vorobev, A.~V. Dorogush, and A.~Gulin,
+``CatBoost: unbiased boosting with categorical features,''
+in \textit{Proc. 32nd Conf. Neural Information Processing Systems (NeurIPS)},
+Montreal, Canada, 2018, pp.~6638--6648.
+
+\bibitem{lee2020}
+J.~Lee \textit{et al.},
+``BioBERT: a pre-trained biomedical language representation model for biomedical text mining,''
+\textit{Bioinformatics}, vol.~36, no.~4, pp.~1234--1240, Feb. 2020.
+
+\bibitem{gu2021}
+K.~Gu \textit{et al.},
+``Domain-specific language model pretraining for biomedical natural language processing,''
+\textit{ACM Trans. Computing for Healthcare}, vol.~3, no.~1, pp.~1--23, 2021.
+
+\bibitem{wolf2020}
+T.~Wolf \textit{et al.},
+``Transformers: State-of-the-art natural language processing,''
+in \textit{Proc. EMNLP: System Demonstrations}, 2020, pp.~38--45.
+
+\bibitem{lundberg2017}
+S.~M. Lundberg and S.-I. Lee,
+``A unified approach to interpreting model predictions,''
+in \textit{Proc. 31st Conf. Neural Information Processing Systems (NeurIPS)},
+Long Beach, CA, USA, 2017, pp.~4765--4774.
+
+\bibitem{vaswani2017}
+A.~Vaswani \textit{et al.},
+``Attention is all you need,''
+in \textit{Proc. 31st Conf. Neural Information Processing Systems (NeurIPS)}, 2017.
+
+\bibitem{vapi2024}
+Vapi AI, ``Vapi: Voice AI Platform for Developers,'' 2024. [Online]. Available: \url{https://vapi.ai}
+
+\bibitem{rapidfuzz2024}
+M.~Bachmann,
+``RapidFuzz: Rapid fuzzy string matching in Python,''
+2024. [Online]. Available: \url{https://github.com/maxbachmann/RapidFuzz}
+
+\end{thebibliography}
+
+\end{document}

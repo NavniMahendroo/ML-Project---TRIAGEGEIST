@@ -1,0 +1,27 @@
+{
+    "model_version": "v1.0.2",
+    "oof_qwk": 0.9975,
+    "oof_linear_kappa": 0.9956,
+    "oof_unweighted_kappa": 0.9933,
+    "oof_macro_f1": 0.9895,
+    "oof_weighted_f1": 0.9951,
+    "oof_accuracy": 0.9951,
+    "undertriage_rate": 0.0036,
+    "overtriage_rate": 0.0013,
+    "cv_qwk_mean": 0.9975,
+    "cv_qwk_std": 0.0003,
+    "fold_qwk": {
+        "fold_1": 0.9974,
+        "fold_2": 0.997,
+        "fold_3": 0.998,
+        "fold_4": 0.9977,
+        "fold_5": 0.9975
+    },
+    "fold_macro_f1": {
+        "fold_1": 0.9891,
+        "fold_2": 0.9898,
+        "fold_3": 0.99,
+        "fold_4": 0.9887,
+        "fold_5": 0.9899
+    }
+}
